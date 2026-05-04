@@ -1,0 +1,44 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite"
+    },
+    "devDependencies": {
+        "@inertiajs/vue3": "^2.0.0",
+        "@tailwindcss/forms": "^0.5.3",
+        "@tailwindcss/vite": "^4.0.0",
+        "@vitejs/plugin-vue": "^6.0.0",
+        "autoprefixer": "^10.4.12",
+        "axios": "^1.11.0",
+        "concurrently": "^9.0.1",
+        "laravel-vite-plugin": "^3.0.0",
+        "postcss": "^8.4.31",
+        "tailwindcss": "^3.2.1",
+        "vite": "^8.0.0",
+        "vue": "^3.4.0"
+    },
+    "dependencies": {
+        "@radix-icons/vue": "^1.0.0",
+        "@simonwep/pickr": "^1.9.1",
+        "@tanstack/vue-table": "^8.21.3",
+        "@vee-validate/zod": "^4.15.1",
+        "@vueuse/core": "^14.2.1",
+        "chart.js": "^4.5.1",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "lodash": "^4.17.23",
+        "lucide-vue-next": "^1.0.0",
+        "radix-vue": "^1.9.17",
+        "reka-ui": "^2.9.2",
+        "tailwind-merge": "^3.5.0",
+        "tailwindcss-animate": "^1.0.7",
+        "vee-validate": "^4.15.1",
+        "vue-chartjs": "^5.3.3",
+        "vue-i18n": "^9.14.5",
+        "vue-sonner": "^2.0.9",
+        "zod": "^3.25.76"
+    }
+}
