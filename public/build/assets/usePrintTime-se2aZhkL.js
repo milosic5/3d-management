@@ -1,0 +1,1 @@
+import{b as e}from"./index.esm-DWj7yQJY.js";function t(t){return{formattedPrintTime:e(()=>{if(!t.value&&t.value!==0)return`—`;let e=Math.floor(t.value/60),n=t.value%60;return e>0&&n>0?`${e}h ${n}m`:e>0?`${e}h`:`${n}m`})}}export{t};
