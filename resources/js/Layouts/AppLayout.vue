@@ -1,12 +1,23 @@
 <template>
     <div class="min-h-screen bg-[#F8F9FB] dark:bg-[#0F1117] text-slate-900 dark:text-slate-100 flex font-sans">
         
+        <!-- Mobile Sidebar Backdrop -->
+        <div v-if="isSidebarOpen" @click="isSidebarOpen = false" class="fixed inset-0 z-10 bg-slate-900/50 backdrop-blur-sm md:hidden"></div>
+
         <!-- Sidebar -->
-        <aside class="w-[240px] bg-[#0F1117] text-slate-300 flex-shrink-0 fixed h-full z-20 flex flex-col transition-all">
+        <aside :class="[
+            'w-[240px] bg-[#0F1117] text-slate-300 flex-shrink-0 fixed h-full z-20 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0',
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        ]">
             <!-- Brand -->
-            <div class="h-16 flex items-center px-6 border-b border-slate-800">
-                <LayersIcon class="w-6 h-6 text-orange-500 mr-3" />
-                <span class="font-bold text-white tracking-tight">3D PrintShop</span>
+            <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
+                <div class="flex items-center">
+                    <LayersIcon class="w-6 h-6 text-orange-500 mr-3" />
+                    <span class="font-bold text-white tracking-tight">3D PrintShop</span>
+                </div>
+                <button @click="isSidebarOpen = false" class="md:hidden text-slate-400 hover:text-white">
+                    <XIcon class="w-5 h-5" />
+                </button>
             </div>
             
             <!-- Navigation -->
@@ -79,12 +90,18 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 ml-[240px] flex flex-col min-h-screen">
+        <main class="flex-1 flex flex-col min-h-screen md:ml-[240px] w-full md:w-auto">
             <!-- Topbar -->
-            <header class="h-16 bg-white dark:bg-[#0F1117] border-b border-gray-200 dark:border-slate-800 flex items-center justify-between px-6 z-10 sticky top-0">
-                <!-- Breadcrumbs placeholder slot -->
-                <div class="flex items-center text-sm text-slate-500">
-                    <slot name="breadcrumb" />
+            <header class="h-16 bg-white dark:bg-[#0F1117] border-b border-gray-200 dark:border-slate-800 flex items-center justify-between px-4 md:px-6 z-10 sticky top-0">
+                <div class="flex items-center">
+                    <!-- Hamburger Menu -->
+                    <button @click="isSidebarOpen = true" class="mr-4 md:hidden text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                        <MenuIcon class="w-6 h-6" />
+                    </button>
+                    <!-- Breadcrumbs placeholder slot -->
+                    <div class="hidden sm:flex items-center text-sm text-slate-500">
+                        <slot name="breadcrumb" />
+                    </div>
                 </div>
                 
                 <!-- Right actions -->
@@ -108,16 +125,19 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import { Toaster } from 'vue-sonner';
 import { 
     LayoutDashboardIcon, ClipboardListIcon, BoxIcon, 
     LayersIcon, SlidersHorizontalIcon, TrendingUpIcon, BarChart2Icon, 
-    UsersIcon, SettingsIcon, LogOutIcon, GlobeIcon, PrinterIcon 
+    UsersIcon, SettingsIcon, LogOutIcon, GlobeIcon, PrinterIcon,
+    MenuIcon, XIcon
 } from 'lucide-vue-next';
 
 const { locale } = useI18n();
+const isSidebarOpen = ref(false);
 
 const toggleLocale = () => {
     const newLocale = locale.value === 'en' ? 'sr' : 'en';

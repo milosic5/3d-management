@@ -1,24 +1,25 @@
 <template>
   <div class="space-y-4">
     <!-- Filters Row -->
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-3">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
         <Input 
             v-if="searchable"
             :placeholder="searchPlaceholder || $t('common.search')" 
-            class="w-72"
+            class="w-full sm:w-72"
             :model-value="modelValue" 
             @update:model-value="$emit('update:modelValue', $event)" 
         />
         <slot name="filters" />
       </div>
-      <div>
+      <div class="w-full sm:w-auto flex justify-end">
         <slot name="actions" />
       </div>
     </div>
 
     <!-- Table content -->
-    <div class="rounded-md border bg-white dark:bg-slate-950 dark:border-slate-800 overflow-hidden shadow-sm">
+    <div class="rounded-md border bg-white dark:bg-slate-950 dark:border-slate-800 overflow-hidden shadow-sm w-full">
+      <div class="overflow-x-auto">
       <Table>
         <TableHeader class="bg-slate-50 dark:bg-slate-900/50">
           <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
@@ -65,10 +66,11 @@
           </TableRow>
         </TableBody>
       </Table>
+      </div>
     </div>
 
     <!-- Server-side pagination (Laravel paginator) -->
-    <div v-if="pagination && pagination.last_page > 1" class="flex items-center justify-between py-4">
+    <div v-if="pagination && pagination.last_page > 1" class="flex flex-col sm:flex-row items-center justify-between py-4 gap-4">
       <div class="text-xs text-slate-500 ml-1">
         {{ $t('common.page') }} {{ pagination.current_page }} {{ $t('common.of') }} {{ pagination.last_page }}
         <span class="ml-2 text-slate-400">({{ pagination.total }} {{ $t('common.total', 'total') }})</span>
@@ -84,7 +86,7 @@
     </div>
 
     <!-- Client-side pagination (when no server paginator provided) -->
-    <div v-else-if="!pagination && table.getPageCount() > 1" class="flex items-center justify-between py-4">
+    <div v-else-if="!pagination && table.getPageCount() > 1" class="flex flex-col sm:flex-row items-center justify-between py-4 gap-4">
       <div class="text-xs text-slate-500 ml-1">
         {{ $t('common.page') }} {{ table.getState().pagination.pageIndex + 1 }} {{ $t('common.of') }} {{ table.getPageCount() }}
       </div>
