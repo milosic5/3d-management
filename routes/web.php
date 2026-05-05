@@ -33,6 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('products/trash', [ProductController::class, 'trash'])->name('products.trash');
     Route::post('products/{product}/restore', [ProductController::class, 'restore'])->name('products.restore')->withTrashed();
     Route::delete('products/{product}/force', [ProductController::class, 'forceDelete'])->name('products.forceDelete')->withTrashed();
+    Route::get('products/{product}/download/{index?}', [ProductController::class, 'download'])->name('products.download');
     Route::resource('products', ProductController::class);
     
     Route::resource('filaments', FilamentController::class);

@@ -26,7 +26,8 @@
     "next": "Sledeća",
     "page": "Strana",
     "of": "od",
-    "upload_hint": "Kliknite da otpremite ili prevucite"
+    "upload_hint": "Kliknite da otpremite ili prevucite",
+    "download": "Preuzmi"
   },
   "nav": {
     "dashboard": "Kontrolna tabla",
@@ -170,7 +171,8 @@
     "print_variables": "Parametri štampe",
     "media_files": "Mediji i fajlovi",
     "product_image": "Slika proizvoda",
-    "model_file": "3D model fajl",
+    "model_file": "3D model fajl 1",
+    "model_file_2": "3D model fajl 2",
     "search_placeholder": "Pretraži naziv proizvoda...",
     "trash": "Koš",
     "delete_confirm": "Da li ste sigurni da želite da obrišete ovaj proizvod? Biće premešten u koš.",

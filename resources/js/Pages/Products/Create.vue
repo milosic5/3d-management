@@ -76,13 +76,24 @@
 
             <div>
                 <label class="block text-sm font-medium mb-2">{{ $t('products.model_file') }}</label>
-                <FilePicker accept=".stl,.3mf,.step,.gcode" label="Upload 3D model" @change="onModelChange">
+                <FilePicker accept=".stl,.3mf,.step,.gcode" label="Upload 3D model 1" @change="onModelChange">
                     <template #icon>
                         <BoxIcon class="w-8 h-8 text-slate-400 mb-2" />
                     </template>
                 </FilePicker>
                 <div class="mt-2 text-sm font-medium" v-if="modelName">{{ modelName }}</div>
                 <div class="text-red-500 text-sm mt-1" v-if="form.errors.model_file">{{ form.errors.model_file }}</div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2">{{ $t('products.model_file_2') }}</label>
+                <FilePicker accept=".stl,.3mf,.step,.gcode" label="Upload 3D model 2" @change="onModelChange2">
+                    <template #icon>
+                        <BoxIcon class="w-8 h-8 text-slate-400 mb-2" />
+                    </template>
+                </FilePicker>
+                <div class="mt-2 text-sm font-medium" v-if="modelName2">{{ modelName2 }}</div>
+                <div class="text-red-500 text-sm mt-1" v-if="form.errors.model_file_2">{{ form.errors.model_file_2 }}</div>
             </div>
         </div>
       </Card>
@@ -121,11 +132,13 @@ const form = useForm({
     price: 0,
     image: null,
     model_file: null,
+    model_file_2: null,
     is_active: true
 })
 
 const imageName = ref('')
 const modelName = ref('')
+const modelName2 = ref('')
 const imagePreview = ref(null)
 
 const onImageChange = (e) => {
@@ -145,6 +158,14 @@ const onModelChange = (e) => {
     if (file) {
         form.model_file = file
         modelName.value = file.name
+    }
+}
+
+const onModelChange2 = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+        form.model_file_2 = file
+        modelName2.value = file.name
     }
 }
 

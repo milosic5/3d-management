@@ -26,7 +26,8 @@
     "next": "Next",
     "page": "Page",
     "of": "of",
-    "upload_hint": "Click to upload or drag and drop"
+    "upload_hint": "Click to upload or drag and drop",
+    "download": "Download"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -170,7 +171,8 @@
     "print_variables": "Print Variables",
     "media_files": "Media & Files",
     "product_image": "Product Image",
-    "model_file": "3D Model File",
+    "model_file": "3D Model File 1",
+    "model_file_2": "3D Model File 2",
     "search_placeholder": "Search product name...",
     "trash": "Trash",
     "delete_confirm": "Are you sure you want to delete this product? It will be moved to the trash.",

@@ -56,6 +56,7 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'image' => 'nullable|image|max:5120',
             'model_file' => 'nullable|file|max:102400',
+            'model_file_2' => 'nullable|file|max:102400',
             'is_active' => 'boolean'
         ]);
 
@@ -67,6 +68,12 @@ class ProductController extends Controller
             $file = $request->file('model_file');
             $validated['model_file_name'] = $file->getClientOriginalName();
             $validated['model_file_path'] = $file->store('models', 'public');
+        }
+
+        if ($request->hasFile('model_file_2')) {
+            $file2 = $request->file('model_file_2');
+            $validated['model_file_name_2'] = $file2->getClientOriginalName();
+            $validated['model_file_path_2'] = $file2->store('models', 'public');
         }
 
         Product::create($validated);
@@ -94,6 +101,7 @@ class ProductController extends Controller
             'price' => 'required|numeric',
             'image' => 'nullable|image|max:5120',
             'model_file' => 'nullable|file|max:102400',
+            'model_file_2' => 'nullable|file|max:102400',
             'is_active' => 'boolean'
         ]);
 
@@ -107,6 +115,13 @@ class ProductController extends Controller
             $file = $request->file('model_file');
             $validated['model_file_name'] = $file->getClientOriginalName();
             $validated['model_file_path'] = $file->store('models', 'public');
+        }
+
+        if ($request->hasFile('model_file_2')) {
+            if ($product->model_file_path_2) Storage::disk('public')->delete($product->model_file_path_2);
+            $file2 = $request->file('model_file_2');
+            $validated['model_file_name_2'] = $file2->getClientOriginalName();
+            $validated['model_file_path_2'] = $file2->store('models', 'public');
         }
 
         $product->update($validated);
@@ -142,8 +157,21 @@ class ProductController extends Controller
         
         if ($product->image_path) Storage::disk('public')->delete($product->image_path);
         if ($product->model_file_path) Storage::disk('public')->delete($product->model_file_path);
+        if ($product->model_file_path_2) Storage::disk('public')->delete($product->model_file_path_2);
         
         $product->forceDelete();
         return back();
+    }
+
+    public function download(Product $product, $index = 1)
+    {
+        $path = $index == 2 ? $product->model_file_path_2 : $product->model_file_path;
+        $name = $index == 2 ? $product->model_file_name_2 : $product->model_file_name;
+
+        if (!$path || !Storage::disk('public')->exists($path)) {
+            abort(404, 'File not found');
+        }
+
+        return Storage::disk('public')->download($path, $name);
     }
 }

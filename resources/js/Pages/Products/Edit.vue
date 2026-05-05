@@ -81,16 +81,36 @@
 
             <div>
                 <label class="block text-sm font-medium mb-2">{{ $t('products.model_file') }}</label>
-                <div v-if="product.model_file_name" class="mb-4 text-sm font-mono text-blue-600 bg-blue-50 px-3 py-2 rounded-md truncate">
-                    Current: {{ product.model_file_name }}
+                <div v-if="product.model_file_name" class="mb-4 text-sm font-mono text-blue-600 bg-blue-50 px-3 py-2 rounded-md truncate flex justify-between items-center">
+                    <span>Current: {{ product.model_file_name }}</span>
+                    <a :href="route('products.download', { product: product.id, index: 1 })" target="_blank" class="text-orange-600 hover:text-orange-800 underline ml-2">
+                        {{ $t('common.download') }}
+                    </a>
                 </div>
-                <FilePicker accept=".stl,.3mf,.step,.gcode" label="Upload new model (replaces old)" @change="onModelChange">
+                <FilePicker accept=".stl,.3mf,.step,.gcode" label="Upload new model 1 (replaces old)" @change="onModelChange">
                     <template #icon>
                         <BoxIcon class="w-8 h-8 text-slate-400 mb-2" />
                     </template>
                 </FilePicker>
                 <div class="mt-2 text-sm font-medium" v-if="modelName">{{ modelName }}</div>
                 <div class="text-red-500 text-sm mt-1" v-if="form.errors.model_file">{{ form.errors.model_file }}</div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-2">{{ $t('products.model_file_2') }}</label>
+                <div v-if="product.model_file_name_2" class="mb-4 text-sm font-mono text-blue-600 bg-blue-50 px-3 py-2 rounded-md truncate flex justify-between items-center">
+                    <span>Current: {{ product.model_file_name_2 }}</span>
+                    <a :href="route('products.download', { product: product.id, index: 2 })" target="_blank" class="text-orange-600 hover:text-orange-800 underline ml-2">
+                        {{ $t('common.download') }}
+                    </a>
+                </div>
+                <FilePicker accept=".stl,.3mf,.step,.gcode" label="Upload new model 2 (replaces old)" @change="onModelChange2">
+                    <template #icon>
+                        <BoxIcon class="w-8 h-8 text-slate-400 mb-2" />
+                    </template>
+                </FilePicker>
+                <div class="mt-2 text-sm font-medium" v-if="modelName2">{{ modelName2 }}</div>
+                <div class="text-red-500 text-sm mt-1" v-if="form.errors.model_file_2">{{ form.errors.model_file_2 }}</div>
             </div>
         </div>
       </Card>
@@ -130,11 +150,13 @@ const form = useForm({
     price: props.product.price,
     image: null,
     model_file: null,
+    model_file_2: null,
     is_active: props.product.is_active === 1 || props.product.is_active === true
 })
 
 const imageName = ref('')
 const modelName = ref('')
+const modelName2 = ref('')
 const imagePreview = ref(null)
 
 const onImageChange = (e) => {
@@ -154,6 +176,14 @@ const onModelChange = (e) => {
     if (file) {
         form.model_file = file
         modelName.value = file.name
+    }
+}
+
+const onModelChange2 = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+        form.model_file_2 = file
+        modelName2.value = file.name
     }
 }
 
