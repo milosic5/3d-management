@@ -201,10 +201,11 @@ const columns = computed(() => {
       id: 'dimensions',
       cell: ({ row }) => {
           const r = row.original
+          const fmt = (val) => Number(val)
           if (r.type === 'box') {
-              return `${r.length} x ${r.width} x ${r.height} cm`
+              return `${fmt(r.length)} x ${fmt(r.width)} x ${fmt(r.height)} cm`
           }
-          return `${r.length} x ${r.width} cm`
+          return `${fmt(r.length)} x ${fmt(r.width)} cm`
       }
     },
     {
