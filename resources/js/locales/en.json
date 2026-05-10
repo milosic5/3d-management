@@ -40,7 +40,8 @@
     "investments": "Investments",
     "analytics": "Analytics",
     "users": "Users",
-    "settings": "Settings"
+    "settings": "Settings",
+    "packagings": "Packaging"
   },
   "dashboard": {
     "title": "Financial & Operational Overview",
@@ -305,5 +306,26 @@
     "coming_soon": "Advanced Reporting Coming Soon",
     "coming_soon_desc": "Our core analytics are currently served directly from the primary Dashboard. Future iterations will include deep customer journey mapping and material efficiency algorithms here.",
     "return_btn": "Return to Dashboard"
+  },
+  "packagings": {
+    "title": "Packaging",
+    "boxes": "Boxes",
+    "envelopes": "Air Bubble Envelopes",
+    "new_box": "Add Box",
+    "new_envelope": "Add Envelope",
+    "edit": "Edit",
+    "type": "Type",
+    "name": "Name",
+    "dimensions": "Dimensions (cm)",
+    "length": "Length (a)",
+    "width": "Width (b)",
+    "height": "Height (c)",
+    "stock": "Stock",
+    "actions": "Actions",
+    "search_placeholder": "Search name...",
+    "delete_confirm": "Are you sure you want to delete this packaging material?",
+    "deleted": "Packaging material deleted.",
+    "add_stock": "Add stock",
+    "remove_stock": "Remove stock"
   }
 }

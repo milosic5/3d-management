@@ -42,6 +42,9 @@ Route::middleware('auth')->group(function () {
     Route::post('printers/{printer}/reset-nozzle', [\App\Http\Controllers\PrinterController::class, 'resetNozzle'])->name('printers.reset-nozzle');
     Route::post('printers/{printer}/maintenance', [\App\Http\Controllers\PrinterController::class, 'storeMaintenance'])->name('printers.maintenance');
 
+    Route::post('packagings/{packaging}/add-stock', [\App\Http\Controllers\PackagingController::class, 'addStock'])->name('packagings.add-stock');
+    Route::post('packagings/{packaging}/remove-stock', [\App\Http\Controllers\PackagingController::class, 'removeStock'])->name('packagings.remove-stock');
+    Route::resource('packagings', \App\Http\Controllers\PackagingController::class)->except(['create', 'edit', 'show']);
     // Profile (default breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

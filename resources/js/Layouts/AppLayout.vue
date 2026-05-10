@@ -34,6 +34,10 @@
                     <BoxIcon class="w-5 h-5 mr-3" />
                     <span>{{ $t('nav.products') }}</span>
                 </Link>
+                <Link :href="route('packagings.index')" class="flex items-center px-3 py-2 rounded-md transition-colors" :class="route().current('packagings.*') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
+                    <PackageIcon class="w-5 h-5 mr-3" />
+                    <span>{{ $t('nav.packagings') }}</span>
+                </Link>
                 <Link :href="route('filaments.index')" class="flex items-center px-3 py-2 rounded-md transition-colors" :class="route().current('filaments.*') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
                     <LayersIcon class="w-5 h-5 mr-3" />
                     <span>{{ $t('nav.filaments') }}</span>
@@ -133,7 +137,7 @@ import {
     LayoutDashboardIcon, ClipboardListIcon, BoxIcon, 
     LayersIcon, SlidersHorizontalIcon, TrendingUpIcon, BarChart2Icon, 
     UsersIcon, SettingsIcon, LogOutIcon, GlobeIcon, PrinterIcon,
-    MenuIcon, XIcon
+    MenuIcon, XIcon, PackageIcon
 } from 'lucide-vue-next';
 
 const { locale } = useI18n();

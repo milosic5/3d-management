@@ -40,7 +40,8 @@
     "investments": "Investicije",
     "analytics": "Analitika",
     "users": "Korisnici",
-    "settings": "Podešavanja"
+    "settings": "Podešavanja",
+    "packagings": "Ambalaža"
   },
   "dashboard": {
     "title": "Finansijski i operativni pregled",
@@ -306,5 +307,26 @@
     "coming_soon": "Napredno izveštavanje uskoro",
     "coming_soon_desc": "Naše osnovne analitike se trenutno prikazuju direktno na kontrolnoj tabli. Buduće verzije uključivaće dubinsko mapiranje korisničkog puta i algoritme efikasnosti materijala.",
     "return_btn": "Povratak na kontrolnu tablu"
+  },
+  "packagings": {
+    "title": "Ambalaža",
+    "boxes": "Kutije",
+    "envelopes": "Air Bubble Koverte",
+    "new_box": "Dodaj kutiju",
+    "new_envelope": "Dodaj kovertu",
+    "edit": "Izmeni",
+    "type": "Tip",
+    "name": "Naziv",
+    "dimensions": "Dimenzije (cm)",
+    "length": "Dužina (a)",
+    "width": "Širina (b)",
+    "height": "Visina (c)",
+    "stock": "Na stanju",
+    "actions": "Akcije",
+    "search_placeholder": "Pretraži naziv...",
+    "delete_confirm": "Da li ste sigurni da želite da obrišete ovu ambalažu?",
+    "deleted": "Ambalaža obrisana.",
+    "add_stock": "Dodaj stanje",
+    "remove_stock": "Oduzmi stanje"
   }
 }
