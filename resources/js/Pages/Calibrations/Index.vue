@@ -68,9 +68,9 @@
         <TableBody>
           <TableRow v-for="item in calibrations.data" :key="item.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
             <TableCell>
-                <ColorSwatch :colorHex="item.filament_color_hex || '#ccc'" :colorName="item.filament_color_name || 'N/A'" />
+                <ColorSwatch :colorHex="item.color_hex || '#ccc'" :colorName="item.color_name || 'N/A'" />
             </TableCell>
-            <TableCell class="font-medium">{{ item.filament_brand }}</TableCell>
+            <TableCell class="font-medium">{{ item.brand }}</TableCell>
             <TableCell class="font-semibold">{{ item.filament_name }}</TableCell>
             <TableCell>
                 <span v-if="item.temperature">{{ item.temperature }} °C</span>

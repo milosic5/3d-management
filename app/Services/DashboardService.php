@@ -13,6 +13,11 @@ class DashboardService
     protected function getDateRange($period)
     {
         $now = Carbon::now();
+        if (preg_match('/^\d{4}-\d{2}$/', $period)) {
+            $date = Carbon::createFromFormat('Y-m', $period);
+            return [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()];
+        }
+        
         return match ($period) {
             'this_month' => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()],
             'last_month' => [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth()],
@@ -31,6 +36,7 @@ class DashboardService
         $margin = $revenue > 0 ? round(($profit / $revenue) * 100, 1) : 0;
         $activeOrders = Order::whereIn('status', ['received', 'printing'])->count();
         $deliveredCount = Order::where('status', 'delivered')->whereBetween('created_at', [$start, $end])->count();
+        $totalOrders = Order::whereBetween('created_at', [$start, $end])->count();
         $avgOrderValue = $deliveredCount > 0 ? round($revenue / $deliveredCount, 2) : 0;
 
         return [
@@ -40,6 +46,7 @@ class DashboardService
             'profitMargin' => $margin,
             'activeOrders' => $activeOrders,
             'avgOrderValue' => $avgOrderValue,
+            'totalOrders' => $totalOrders,
         ];
     }
 

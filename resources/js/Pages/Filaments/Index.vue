@@ -97,6 +97,11 @@ const columns = [
     cell: ({ row }) => h('span', { class: 'font-mono text-orange-600' }, `${row.original.price_per_kg}`)
   },
   {
+    header: t('filaments.empty_spool_weight'),
+    accessorKey: 'empty_spool_weight_grams',
+    cell: ({ row }) => h('span', { class: 'text-slate-500' }, row.original.empty_spool_weight_grams ? `${row.original.empty_spool_weight_grams} ${t('filaments.empty_spool_weight_unit')}` : '-')
+  },
+  {
     id: 'actions',
     cell: ({ row }) => h('div', { class: 'flex items-center space-x-2' }, [
         h(Link, { href: route('filaments.edit', row.original.id) }, () => h(Button, { variant: 'ghost', size: 'icon' }, () => h(PencilIcon, { class: 'w-4 h-4 text-slate-500' }))),

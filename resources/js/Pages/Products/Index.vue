@@ -99,11 +99,11 @@ const columns = [
     id: 'product',
     accessorKey: 'name',
     header: t('products.name'),
-    cell: ({ row }) => h('div', { class: 'flex items-center space-x-3' }, [
+    cell: ({ row }) => h(Link, { href: route('products.edit', row.original.id), class: 'flex items-center space-x-3 hover:opacity-80 group' }, () => [
       row.original.image_path 
         ? h('img', { src: `/storage/${row.original.image_path}`, class: 'w-10 h-10 rounded-md object-cover border dark:border-slate-700' })
         : h('div', { class: 'w-10 h-10 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400' }, [h(BoxIcon, { class: 'w-5 h-5' })]),
-      h('span', { class: 'font-semibold' }, row.original.name)
+      h('span', { class: 'font-semibold group-hover:underline' }, row.original.name)
     ])
   },
   {

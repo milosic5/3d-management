@@ -6,12 +6,18 @@
         
         <PageHeader :title="$t('dashboard.title')" :description="$t('dashboard.desc')">
             <template #actions>
-                <div class="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-md">
-                    <button v-for="p in periods" :key="p.value" @click="setPeriod(p.value)"
-                            class="px-3 py-1.5 text-xs font-medium rounded-sm transition-colors"
-                            :class="activePeriod === p.value ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'">
-                        {{ p.label }}
-                    </button>
+                <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-md">
+                        <button v-for="p in periods" :key="p.value" @click="setPeriod(p.value)"
+                                class="px-3 py-1.5 text-xs font-medium rounded-sm transition-colors"
+                                :class="activePeriod === p.value ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'">
+                            {{ p.label }}
+                        </button>
+                    </div>
+                    <select v-model="activePeriod" @change="setPeriod($event.target.value)" class="h-8 text-xs font-medium rounded-md border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:ring-orange-500 focus:border-orange-500">
+                        <option value="" disabled>{{ $t('dashboard.select_month') }}</option>
+                        <option v-for="m in pastMonths" :key="m.value" :value="m.value">{{ m.label }}</option>
+                    </select>
                 </div>
             </template>
         </PageHeader>
@@ -143,6 +149,20 @@ const periods = computed(() => [
 
 const activePeriod = ref(localStorage.getItem('dashboard_period') || props.filters.period || 'this_month');
 
+const pastMonths = computed(() => {
+    const months = [];
+    const date = new Date();
+    for (let i = 0; i < 12; i++) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const value = `${year}-${month}`;
+        const label = new Intl.DateTimeFormat(t('common.locale_code') || 'en', { month: 'long', year: 'numeric' }).format(date);
+        months.push({ value, label });
+        date.setMonth(date.getMonth() - 1);
+    }
+    return months;
+});
+
 const setPeriod = (val) => {
     activePeriod.value = val;
     localStorage.setItem('dashboard_period', val);
@@ -172,7 +192,7 @@ const kpiConfig = computed(() => {
             containerClass: isProfit ? 'border-green-200 dark:border-green-900/50 bg-green-50/50 dark:bg-green-900/10' : 'border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-900/10',
             textClass: isProfit ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
         },
-        { label: t('dashboard.kpis.margin'), value: `${s.profitMargin}%`, icon: PercentIcon, iconClass: 'text-indigo-500' },
+        { label: t('dashboard.kpis.total_orders'), value: s.totalOrders, icon: BoxIcon, iconClass: 'text-indigo-500' },
         { label: t('dashboard.kpis.active_orders'), value: s.activeOrders, icon: BoxIcon, iconClass: 'text-blue-500' },
         { label: t('dashboard.kpis.avg_order'), value: `${s.avgOrderValue} ${t('common.currency')}`, icon: TicketIcon, iconClass: 'text-teal-500' },
     ];

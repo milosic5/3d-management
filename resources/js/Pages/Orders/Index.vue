@@ -81,18 +81,18 @@ const columns = [
   {
     header: t('orders.order_number'),
     accessorKey: 'order_number',
-    cell: ({ row }) => h('span', { class: 'font-mono text-orange-600 font-medium' }, row.original.order_number)
+    cell: ({ row }) => h(Link, { href: route('orders.show', row.original.id), class: 'hover:underline text-orange-600' }, () => h('span', { class: 'font-mono font-medium' }, row.original.order_number))
   },
   {
     header: t('orders.order_items'),
     cell: ({ row }) => {
         const items = row.original.items || []
         if (items.length === 0) return null
-        return h('div', { class: 'flex flex-col gap-1' }, items.map(item => {
+        return h(Link, { href: route('orders.show', row.original.id) }, () => h('div', { class: 'flex flex-col gap-1 cursor-pointer hover:opacity-80' }, items.map(item => {
             return h('span', { class: 'text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border dark:border-slate-700 w-fit' }, 
               `${item.quantity}x ${item.product?.name || t('orders.product')}`
             )
-        }))
+        })))
     }
   },
   { header: t('orders.customer_name'), accessorKey: 'customer_name' },

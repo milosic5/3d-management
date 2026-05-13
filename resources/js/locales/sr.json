@@ -60,7 +60,8 @@
       "profit": "Bruto profit",
       "margin": "Profitna marža",
       "active_orders": "Aktivne porudžbine",
-      "avg_order": "Prosečna vrednost"
+      "avg_order": "Prosečna vrednost",
+      "total_orders": "Broj porudžbina"
     },
     "cost_breakdown": "Struktura troškova",
     "no_cost_data": "Nema podataka o troškovima",
@@ -84,7 +85,8 @@
       "time": "Vreme",
       "total": "Ukupno"
     },
-    "orders_by_status": "Porudžbine po statusu"
+    "orders_by_status": "Porudžbine po statusu",
+    "select_month": "Izaberi mesec"
   },
   "investments": {
     "title": "Investicije",

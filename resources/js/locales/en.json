@@ -60,7 +60,8 @@
       "profit": "Gross Profit",
       "margin": "Profit Margin",
       "active_orders": "Active Orders",
-      "avg_order": "Avg Order Value"
+      "avg_order": "Avg Order Value",
+      "total_orders": "Total Orders"
     },
     "cost_breakdown": "Cost Breakdown",
     "no_cost_data": "No cost data for this period",
@@ -84,7 +85,8 @@
       "time": "Time",
       "total": "Total"
     },
-    "orders_by_status": "Orders by Status"
+    "orders_by_status": "Orders by Status",
+    "select_month": "Select Month"
   },
   "investments": {
     "title": "Investments",
