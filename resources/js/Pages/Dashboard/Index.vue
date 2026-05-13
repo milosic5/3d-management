@@ -137,7 +137,7 @@ const props = defineProps({
     filters: { type: Object, required: true }
 });
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const periods = computed(() => [
     { label: t('dashboard.periods.this_month'), value: 'this_month' },
@@ -156,7 +156,7 @@ const pastMonths = computed(() => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const value = `${year}-${month}`;
-        const label = new Intl.DateTimeFormat(t('common.locale_code') || 'en', { month: 'long', year: 'numeric' }).format(date);
+        const label = new Intl.DateTimeFormat(locale.value || 'en', { month: 'long', year: 'numeric' }).format(date);
         months.push({ value, label });
         date.setMonth(date.getMonth() - 1);
     }
