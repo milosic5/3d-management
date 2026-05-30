@@ -5,6 +5,7 @@
     <PageHeader :title="$t('packagings.title')" description="">
       <template #actions>
         <div class="flex space-x-2">
+            <Button class="bg-indigo-500 hover:bg-indigo-600 text-white" @click="openFindBoxModal"><SearchIcon class="w-4 h-4 mr-2" /> {{ $t('packagings.find_box') }}</Button>
             <Button class="bg-orange-500 hover:bg-orange-600 text-white" @click="openModal('box')"><PlusIcon class="w-4 h-4 mr-2" /> {{ $t('packagings.new_box') }}</Button>
             <Button class="bg-blue-500 hover:bg-blue-600 text-white" @click="openModal('envelope')"><PlusIcon class="w-4 h-4 mr-2" /> {{ $t('packagings.new_envelope') }}</Button>
         </div>
@@ -22,7 +23,7 @@
         </nav>
     </div>
 
-    <DataTable :data="filteredData" :columns="columns" :page-size="15" searchable :search-placeholder="$t('packagings.search_placeholder')" />
+    <DataTable :data="filteredData" :columns="columns" :page-size="15" searchable :search-placeholder="$t('packagings.search_placeholder')" v-model="searchQuery" />
 
     <Modal :show="isModalOpen" @close="closeModal" maxWidth="md">
         <div class="p-6">
@@ -79,6 +80,43 @@
         :description="$t('packagings.delete_confirm')"
         @confirm="deleteItem"
     />
+
+    <Modal :show="isFindBoxModalOpen" @close="closeFindBoxModal" maxWidth="md">
+        <div class="p-6">
+            <h2 class="text-lg font-medium text-slate-900 mb-4">
+                {{ $t('packagings.find_box') }}
+            </h2>
+            <p class="text-sm text-slate-500 mb-4">{{ $t('packagings.item_dimensions') }}</p>
+            
+            <form @submit.prevent="findSuitableBox">
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <InputLabel :value="$t('packagings.length')" />
+                        <TextInput v-model="findBoxForm.length" type="number" step="0.1" class="mt-1 block w-full" required />
+                    </div>
+                    <div>
+                        <InputLabel :value="$t('packagings.width')" />
+                        <TextInput v-model="findBoxForm.width" type="number" step="0.1" class="mt-1 block w-full" required />
+                    </div>
+                    <div>
+                        <InputLabel :value="$t('packagings.height')" />
+                        <TextInput v-model="findBoxForm.height" type="number" step="0.1" class="mt-1 block w-full" required />
+                    </div>
+                </div>
+
+                <div v-if="foundBoxResult" class="mb-4 p-4 rounded-md" :class="foundBoxResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
+                    <p class="text-sm font-medium">{{ foundBoxResult.message }}</p>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <SecondaryButton type="button" @click="closeFindBoxModal">{{ $t('common.cancel') }}</SecondaryButton>
+                    <PrimaryButton>
+                        {{ $t('packagings.find') }}
+                    </PrimaryButton>
+                </div>
+            </form>
+        </div>
+    </Modal>
   </AppLayout>
 </template>
 
@@ -96,7 +134,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import { Button } from '@/Components/ui/button'
-import { PlusIcon, PencilIcon, TrashIcon, MinusIcon } from 'lucide-vue-next'
+import { PlusIcon, PencilIcon, TrashIcon, MinusIcon, SearchIcon } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 
@@ -104,14 +142,30 @@ const props = defineProps({ packagings: Array })
 const { t } = useI18n()
 
 const activeTab = ref('box')
+const searchQuery = ref('')
 
 const filteredData = computed(() => {
-    return props.packagings.filter(p => p.type === activeTab.value)
+    return props.packagings.filter(p => {
+        if (p.type !== activeTab.value) return false
+        if (searchQuery.value) {
+            const query = searchQuery.value.toLowerCase()
+            return p.name && p.name.toLowerCase().includes(query)
+        }
+        return true
+    })
 })
 
 const isModalOpen = ref(false)
 const isDeleteDialogOpen = ref(false)
 const targetItem = ref(null)
+
+const isFindBoxModalOpen = ref(false)
+const foundBoxResult = ref(null)
+const findBoxForm = useForm({
+    length: '',
+    width: '',
+    height: ''
+})
 
 const form = useForm({
     id: null,
@@ -144,6 +198,74 @@ const openModal = (type, item = null) => {
 const closeModal = () => {
     isModalOpen.value = false
     form.reset()
+}
+
+const openFindBoxModal = () => {
+    findBoxForm.reset()
+    foundBoxResult.value = null
+    isFindBoxModalOpen.value = true
+}
+
+const closeFindBoxModal = () => {
+    isFindBoxModalOpen.value = false
+    findBoxForm.reset()
+    foundBoxResult.value = null
+}
+
+const findSuitableBox = () => {
+    foundBoxResult.value = null
+    
+    // Sort item dimensions
+    const itemDims = [
+        Number(findBoxForm.length),
+        Number(findBoxForm.width),
+        Number(findBoxForm.height)
+    ].sort((a, b) => a - b)
+    
+    // Get all boxes
+    const boxes = props.packagings.filter(p => p.type === 'box')
+    
+    let bestBox = null
+    let minVolume = Infinity
+    
+    for (const box of boxes) {
+        // Sort box dimensions
+        const boxDims = [
+            Number(box.length),
+            Number(box.width),
+            Number(box.height)
+        ].sort((a, b) => a - b)
+        
+        // Check if item fits in box
+        if (itemDims[0] <= boxDims[0] && itemDims[1] <= boxDims[1] && itemDims[2] <= boxDims[2]) {
+            const volume = boxDims[0] * boxDims[1] * boxDims[2]
+            if (volume < minVolume) {
+                minVolume = volume
+                bestBox = box
+            }
+        }
+    }
+    
+    if (bestBox) {
+        foundBoxResult.value = {
+            success: true,
+            message: t('packagings.box_found', { name: bestBox.name })
+        }
+        
+        // Automatically switch to box tab and set search query
+        activeTab.value = 'box'
+        searchQuery.value = bestBox.name
+        
+        // Optionally close modal after finding
+        setTimeout(() => {
+            closeFindBoxModal()
+        }, 2000)
+    } else {
+        foundBoxResult.value = {
+            success: false,
+            message: t('packagings.no_box_found')
+        }
+    }
 }
 
 const submitForm = () => {

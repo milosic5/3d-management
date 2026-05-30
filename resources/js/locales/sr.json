@@ -329,6 +329,11 @@
     "delete_confirm": "Da li ste sigurni da želite da obrišete ovu ambalažu?",
     "deleted": "Ambalaža obrisana.",
     "add_stock": "Dodaj stanje",
-    "remove_stock": "Oduzmi stanje"
+    "remove_stock": "Oduzmi stanje",
+    "find_box": "Pronađi kutiju",
+    "item_dimensions": "Dimenzije predmeta",
+    "find": "Pronađi",
+    "no_box_found": "Nije pronađena odgovarajuća kutija za ove dimenzije",
+    "box_found": "Odgovarajuća kutija: {name}"
   }
 }
