@@ -23,7 +23,13 @@
         </nav>
     </div>
 
-    <DataTable :data="filteredData" :columns="columns" :page-size="15" searchable :search-placeholder="$t('packagings.search_placeholder')" v-model="searchQuery" />
+    <DataTable :data="filteredData" :columns="columns" :page-size="15" searchable :search-placeholder="$t('packagings.search_placeholder')" v-model="searchQuery">
+        <template #actions>
+            <Button v-if="foundBoxId" variant="outline" size="sm" @click="foundBoxId = null" class="text-slate-500">
+                Prikaži sve kutije
+            </Button>
+        </template>
+    </DataTable>
 
     <Modal :show="isModalOpen" @close="closeModal" maxWidth="md">
         <div class="p-6">
@@ -143,16 +149,31 @@ const { t } = useI18n()
 
 const activeTab = ref('box')
 const searchQuery = ref('')
+const foundBoxId = ref(null)
 
 const filteredData = computed(() => {
     return props.packagings.filter(p => {
         if (p.type !== activeTab.value) return false
+        
+        if (foundBoxId.value) {
+            return p.id === foundBoxId.value
+        }
+        
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase()
             return p.name && p.name.toLowerCase().includes(query)
         }
         return true
     })
+})
+
+// Clear foundBoxId if user types in search or switches tabs
+import { watch } from 'vue'
+watch(searchQuery, () => {
+    if (searchQuery.value) foundBoxId.value = null
+})
+watch(activeTab, () => {
+    foundBoxId.value = null
 })
 
 const isModalOpen = ref(false)
@@ -249,12 +270,13 @@ const findSuitableBox = () => {
     if (bestBox) {
         foundBoxResult.value = {
             success: true,
-            message: t('packagings.box_found', { name: bestBox.name })
+            message: t('packagings.box_found', { name: bestBox.name || ('#' + bestBox.id) })
         }
         
-        // Automatically switch to box tab and set search query
+        // Automatically switch to box tab and set exact box ID
         activeTab.value = 'box'
-        searchQuery.value = bestBox.name
+        searchQuery.value = ''
+        foundBoxId.value = bestBox.id
         
         // Optionally close modal after finding
         setTimeout(() => {
