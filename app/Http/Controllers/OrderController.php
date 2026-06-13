@@ -24,8 +24,14 @@ class OrderController extends Controller
                   });
             });
         }
-        if ($status = $request->input('status')) {
-            $query->where('status', $status);
+        if ($request->boolean('show_cancelled')) {
+            $query->where('status', 'cancelled');
+        } else {
+            if ($status = $request->input('status')) {
+                $query->where('status', $status);
+            } else {
+                $query->where('status', '!=', 'cancelled');
+            }
         }
         if ($from = $request->input('from')) {
             $query->whereDate('created_at', '>=', $from);
@@ -45,7 +51,7 @@ class OrderController extends Controller
 
         return Inertia::render('Orders/Index', [
             'orders' => $query->paginate(15)->withQueryString(),
-            'filters' => $request->only(['search', 'status', 'from', 'to', 'sort', 'direction'])
+            'filters' => $request->only(['search', 'status', 'from', 'to', 'sort', 'direction', 'show_cancelled'])
         ]);
     }
 
@@ -64,7 +70,7 @@ class OrderController extends Controller
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
             'notes' => 'nullable|string',
-            'status' => 'required|in:received,printing,finished,delivered',
+            'status' => 'required|in:received,printing,finished,delivered,cancelled',
             'estimated_print_minutes' => 'nullable|integer',
             'created_at' => 'nullable|date',
             'items' => 'required|array|min:1',
@@ -155,7 +161,7 @@ class OrderController extends Controller
             $validated = $request->validate([
                 'customer_name' => 'required|string|max:255',
                 'notes' => 'nullable|string',
-                'status' => 'required|in:received,printing,finished,delivered',
+                'status' => 'required|in:received,printing,finished,delivered,cancelled',
                 'estimated_print_minutes' => 'nullable|integer',
                 'created_at' => 'nullable|date',
                 'items' => 'required|array|min:1',
@@ -220,7 +226,7 @@ class OrderController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:received,printing,finished,delivered',
+            'status' => 'required|in:received,printing,finished,delivered,cancelled',
         ]);
 
         $order->update([

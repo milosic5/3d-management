@@ -3,7 +3,8 @@
     "received": "Received",
     "printing": "Printing",
     "finished": "Finished",
-    "delivered": "Delivered"
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
   },
   "common": {
     "currency": "$",
@@ -188,6 +189,7 @@
   "orders": {
     "title": "Orders",
     "new": "New Order",
+    "show_cancelled": "Show cancelled only",
     "search_placeholder": "Search order # or customer...",
     "order_number": "Order #",
     "customer_name": "Customer Name",

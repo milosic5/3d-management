@@ -12,6 +12,10 @@
     
     <DataTable :data="orders.data" :columns="columns" :page-size="15" searchable :search-placeholder="$t('orders.search_placeholder')" v-model="form.search" :pagination="orders" :server-sort="{ key: form.sort, dir: form.direction }" @sort="onSort">
         <template #filters>
+            <div class="flex items-center space-x-2 mr-4">
+                <input type="checkbox" id="show_cancelled" v-model="form.show_cancelled" class="rounded border-slate-300 text-orange-600 focus:ring-orange-500">
+                <label for="show_cancelled" class="text-sm text-slate-600 dark:text-slate-400">{{ $t('orders.show_cancelled') }}</label>
+            </div>
             <select v-model="form.status" class="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
                 <option value="">{{ $t('common.all_statuses') }}</option>
                 <option value="received">{{ $t('status.received') }}</option>
@@ -103,7 +107,8 @@ const columns = [
             'received': 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
             'printing': 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200',
             'finished': 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200',
-            'delivered': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
+            'delivered': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200',
+            'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
         }
         
         return h('select', {
@@ -114,7 +119,8 @@ const columns = [
             h('option', { value: 'received', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.received')),
             h('option', { value: 'printing', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.printing')),
             h('option', { value: 'finished', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.finished')),
-            h('option', { value: 'delivered', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.delivered'))
+            h('option', { value: 'delivered', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.delivered')),
+            h('option', { value: 'cancelled', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.cancelled'))
         ])
     }
   },

@@ -3,7 +3,8 @@
     "received": "Primljeno",
     "printing": "Štampa se",
     "finished": "Završeno",
-    "delivered": "Isporučeno"
+    "delivered": "Isporučeno",
+    "cancelled": "Obustavljena"
   },
   "common": {
     "currency": "RSD",
@@ -188,6 +189,7 @@
   "orders": {
     "title": "Porudžbine",
     "new": "Nova porudžbina",
+    "show_cancelled": "Prikaži samo obustavljene",
     "search_placeholder": "Pretraži broj ili kupca...",
     "order_number": "Porudžbina #",
     "customer_name": "Ime kupca",

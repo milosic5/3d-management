@@ -16,6 +16,7 @@
             <option value="printing">{{ $t('status.printing') }}</option>
             <option value="finished">{{ $t('status.finished') }}</option>
             <option value="delivered">{{ $t('status.delivered') }}</option>
+            <option value="cancelled">{{ $t('status.cancelled') }}</option>
         </select>
         <StatusBadge :status="order.status" class="ml-4" />
       </template>

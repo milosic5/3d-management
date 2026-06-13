@@ -55,18 +55,26 @@
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                         <div class="md:col-span-5">
                             <label class="block text-xs font-medium mb-1">{{ $t('orders.product') }} *</label>
-                            <select v-model="item.product_id" required @change="onProductSelect(item, $event)" class="w-full h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
-                                <option disabled value="">{{ $t('orders.select_product') }}</option>
-                                <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }} ({{ p.price }} {{ $t('common.currency') }})</option>
-                            </select>
+                            <SearchableSelect 
+                                v-model="item.product_id" 
+                                :options="productOptions" 
+                                :placeholder="$t('orders.select_product')" 
+                                :searchPlaceholder="$t('common.search', 'Search...')"
+                                @change="onProductSelect(item, $event)"
+                                :error="!!form.errors[`items.${i}.product_id`]"
+                            />
                             <div class="text-red-500 text-sm mt-1" v-if="form.errors[`items.${i}.product_id`]">{{ form.errors[`items.${i}.product_id`] }}</div>
                         </div>
                         <div class="md:col-span-4">
                             <label class="block text-xs font-medium mb-1">{{ $t('orders.filament') }}</label>
-                            <select v-model="item.filament_id" @change="onFilamentSelect(item, $event)" class="w-full h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
-                                <option value="">{{ $t('orders.select_filament') }}</option>
-                                <option v-for="f in filaments" :key="f.id" :value="f.id">{{ f.brand }} - {{ f.name }} ({{ f.color_name }})</option>
-                            </select>
+                            <SearchableSelect 
+                                v-model="item.filament_id" 
+                                :options="filamentOptions" 
+                                :placeholder="$t('orders.select_filament')" 
+                                :searchPlaceholder="$t('common.search', 'Search...')"
+                                @change="onFilamentSelect(item, $event)"
+                                :error="!!form.errors[`items.${i}.filament_id`]"
+                            />
                             <div class="text-red-500 text-sm mt-1" v-if="form.errors[`items.${i}.filament_id`]">{{ form.errors[`items.${i}.filament_id`] }}</div>
                         </div>
                         <div class="md:col-span-3">
@@ -129,6 +137,7 @@
                     <option value="printing">{{ $t('status.printing') }}</option>
                     <option value="finished">{{ $t('status.finished') }}</option>
                     <option value="delivered">{{ $t('status.delivered') }}</option>
+                    <option value="cancelled">{{ $t('status.cancelled') }}</option>
                 </select>
             </div>
             
@@ -144,6 +153,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useForm, Link } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import PageHeader from '@/Components/PageHeader.vue'
 import { Card } from '@/Components/ui/card'
@@ -151,8 +161,24 @@ import { Button } from '@/Components/ui/button'
 import { Input } from '@/Components/ui/input'
 import { Textarea } from '@/Components/ui/textarea'
 import { PlusIcon, TrashIcon } from 'lucide-vue-next'
+import SearchableSelect from '@/Components/SearchableSelect.vue'
 
 const props = defineProps({ products: Array, filaments: Array })
+const { t } = useI18n()
+
+const productOptions = computed(() => {
+    return props.products.map(p => ({
+        label: `${p.name} (${p.price} ${t('common.currency')})`,
+        value: p.id
+    }))
+})
+
+const filamentOptions = computed(() => {
+    return props.filaments.map(f => ({
+        label: `${f.brand} - ${f.name} (${f.color_name})`,
+        value: f.id
+    }))
+})
 
 const getLocalISOString = () => {
     const tzoffset = (new Date()).getTimezoneOffset() * 60000;
@@ -175,8 +201,8 @@ const addItem = () => {
 }
 const removeItem = (i) => form.items.splice(i, 1)
 
-const onProductSelect = (item, event) => {
-    const pId = parseInt(event.target.value)
+const onProductSelect = (item, val) => {
+    const pId = parseInt(val && val.target ? val.target.value : val)
     const matched = props.products.find(p => p.id === pId)
     if (matched) {
         item.unit_price = matched.price;
@@ -194,8 +220,8 @@ const onProductSelect = (item, event) => {
     }
 }
 
-const onFilamentSelect = (item, event) => {
-    const fId = parseInt(event.target.value)
+const onFilamentSelect = (item, val) => {
+    const fId = parseInt(val && val.target ? val.target.value : val)
     if (!fId) {
         item.print_cost = 0;
         item._base_unit_cost = 0;

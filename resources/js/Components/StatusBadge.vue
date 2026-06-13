@@ -23,6 +23,7 @@ const badgeClasses = computed(() => {
         case 'printing': return 'border-transparent bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 shadow-sm shadow-amber-500/20';
         case 'finished': return 'border-transparent bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 shadow-sm shadow-green-500/20';
         case 'delivered': return 'border-transparent bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
+        case 'cancelled': return 'border-transparent bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
         default: return 'border-transparent bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
 });
