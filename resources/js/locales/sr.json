@@ -42,7 +42,8 @@
     "analytics": "Analitika",
     "users": "Korisnici",
     "settings": "Podešavanja",
-    "packagings": "Ambalaža"
+    "packagings": "Ambalaža",
+    "filament_stock": "Zalihe filamenata"
   },
   "dashboard": {
     "title": "Finansijski i operativni pregled",
@@ -159,7 +160,14 @@
     "deleted": "Filament je uspešno obrisan.",
     "empty_spool_weight": "Težina prazne rolne",
     "empty_spool_weight_helper": "Opciono. Koristi se za procenu preostalog filamenta merenjem rolne.",
-    "empty_spool_weight_unit": "g"
+    "empty_spool_weight_unit": "g",
+    "stock": "Zalihe",
+    "stock_description": "Upravljajte trenutnim nivoima zaliha filamenata.",
+    "update_stock": "Ažuriraj zalihe",
+    "update_stock_desc": "Izaberite filament i postavite trenutni broj rolni na stanju.",
+    "select_filament": "Izaberi filament",
+    "rolls_in_stock": "Rolni na stanju",
+    "stock_updated": "Zalihe su uspešno ažurirane"
   },
   "products": {
     "title": "Proizvodi",

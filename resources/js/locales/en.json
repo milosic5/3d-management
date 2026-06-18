@@ -42,7 +42,8 @@
     "analytics": "Analytics",
     "users": "Users",
     "settings": "Settings",
-    "packagings": "Packaging"
+    "packagings": "Packaging",
+    "filament_stock": "Filament Stock"
   },
   "dashboard": {
     "title": "Financial & Operational Overview",
@@ -159,7 +160,14 @@
     "deleted": "Filament deleted successfully.",
     "empty_spool_weight": "Empty Spool Weight",
     "empty_spool_weight_helper": "Optional. Used to estimate remaining filament by weighing the spool.",
-    "empty_spool_weight_unit": "g"
+    "empty_spool_weight_unit": "g",
+    "stock": "Stock",
+    "stock_description": "Manage your current filament stock levels.",
+    "update_stock": "Update Stock",
+    "update_stock_desc": "Select a filament and set the current number of rolls in stock.",
+    "select_filament": "Select Filament",
+    "rolls_in_stock": "Rolls in Stock",
+    "stock_updated": "Stock updated successfully"
   },
   "products": {
     "title": "Products",
