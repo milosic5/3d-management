@@ -90,11 +90,13 @@ const materialFilter = ref('')
 
 // Compute filtered filaments for the datatable if we want client-side search since we disabled inertia pagination
 const filteredFilaments = computed(() => {
-  return props.filaments.filter(f => {
-    const matchesSearch = (f.name.toLowerCase() + f.brand.toLowerCase()).includes(searchQuery.value.toLowerCase())
-    const matchesMaterial = materialFilter.value ? f.material === materialFilter.value : true
-    return matchesSearch && matchesMaterial
-  })
+  return props.filaments
+    .filter(f => {
+      const matchesSearch = (f.name.toLowerCase() + f.brand.toLowerCase()).includes(searchQuery.value.toLowerCase())
+      const matchesMaterial = materialFilter.value ? f.material === materialFilter.value : true
+      return matchesSearch && matchesMaterial
+    })
+    .sort((a, b) => (b.stock_rolls || 0) - (a.stock_rolls || 0))
 })
 
 const form = useForm({
