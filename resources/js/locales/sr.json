@@ -168,7 +168,9 @@
     "update_stock_desc": "Izaberite filament i postavite trenutni broj rolni na stanju.",
     "select_filament": "Izaberi filament",
     "rolls_in_stock": "Rolni na stanju",
-    "stock_updated": "Zalihe su uspešno ažurirane"
+    "stock_updated": "Zalihe su uspešno ažurirane",
+    "color": "Boja",
+    "rolls": "rolni"
   },
   "products": {
     "title": "Proizvodi",

@@ -168,7 +168,9 @@
     "update_stock_desc": "Select a filament and set the current number of rolls in stock.",
     "select_filament": "Select Filament",
     "rolls_in_stock": "Rolls in Stock",
-    "stock_updated": "Stock updated successfully"
+    "stock_updated": "Stock updated successfully",
+    "color": "Color",
+    "rolls": "rolls"
   },
   "products": {
     "title": "Products",
