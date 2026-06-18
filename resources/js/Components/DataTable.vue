@@ -49,7 +49,15 @@
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow v-for="row in table.getRowModel().rows" :key="row.id" class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+          <TableRow 
+            v-for="row in table.getRowModel().rows" 
+            :key="row.id" 
+            :class="[
+              'hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors',
+              rowClickable ? 'cursor-pointer select-none' : ''
+            ]"
+            @click="rowClickable && $emit('row-click', row.original)"
+          >
             <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="align-middle">
               <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
             </TableCell>
@@ -123,9 +131,10 @@ const props = defineProps({
   columnVisibility: { type: Object, default: () => ({}) },
   pagination: { type: Object, default: null },
   serverSort: { type: Object, default: null },
+  rowClickable: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['update:modelValue', 'update:columnVisibility', 'sort'])
+const emit = defineEmits(['update:modelValue', 'update:columnVisibility', 'sort', 'row-click'])
 
 const sorting = ref([])
 

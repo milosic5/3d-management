@@ -6,7 +6,7 @@
     </PageHeader>
     
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      <Card class="md:col-span-1 shadow-sm h-fit">
+      <Card id="stock-form-card" class="md:col-span-1 shadow-sm h-fit">
         <CardHeader class="pb-3 border-b border-slate-100 dark:border-slate-800">
           <CardTitle class="text-lg font-semibold flex items-center gap-2">
             <PackagePlusIcon class="w-5 h-5 text-indigo-500" />
@@ -52,8 +52,8 @@
         </CardContent>
       </Card>
 
-      <div class="md:col-span-2">
-        <DataTable :data="filteredFilaments" :columns="columns" :page-size="15" searchable :search-placeholder="$t('filaments.search_placeholder') || 'Search filaments...'" v-model="searchQuery">
+      <div id="stock-table-container" class="md:col-span-2">
+        <DataTable :data="filteredFilaments" :columns="columns" :page-size="15" searchable :search-placeholder="$t('filaments.search_placeholder') || 'Search filaments...'" v-model="searchQuery" row-clickable @row-click="handleRowClick">
           <template #filters>
             <select v-model="materialFilter" class="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
                 <option value="">{{ $t('filaments.all_materials') || 'All Materials' }}</option>
@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, h, computed } from 'vue'
+import { ref, h, computed, onMounted, onUnmounted } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import PageHeader from '@/Components/PageHeader.vue'
@@ -110,6 +110,30 @@ const onFilamentChange = () => {
     form.stock_rolls = selected.stock_rolls || 0
   }
 }
+
+const handleRowClick = (filament) => {
+  form.filament_id = filament.id
+  form.stock_rolls = filament.stock_rolls || 0
+}
+
+const handleOutsideClick = (event) => {
+  if (!form.filament_id) return
+  
+  const clickedFormCard = event.target.closest('#stock-form-card')
+  const clickedTable = event.target.closest('#stock-table-container')
+  
+  if (!clickedFormCard && !clickedTable) {
+    form.reset()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleOutsideClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleOutsideClick)
+})
 
 const submitStock = () => {
   if (!form.filament_id) return
