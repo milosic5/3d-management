@@ -28,7 +28,8 @@
     "page": "Page",
     "of": "of",
     "upload_hint": "Click to upload or drag and drop",
-    "download": "Download"
+    "download": "Download",
+    "select": "Select..."
   },
   "nav": {
     "dashboard": "Dashboard",

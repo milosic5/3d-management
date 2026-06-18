@@ -28,7 +28,8 @@
     "page": "Strana",
     "of": "od",
     "upload_hint": "Kliknite da otpremite ili prevucite",
-    "download": "Preuzmi"
+    "download": "Preuzmi",
+    "select": "Izaberi..."
   },
   "nav": {
     "dashboard": "Kontrolna tabla",
