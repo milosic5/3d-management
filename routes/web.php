@@ -36,6 +36,8 @@ Route::middleware('auth')->group(function () {
     Route::get('products/{product}/download/{index?}', [ProductController::class, 'download'])->name('products.download');
     Route::resource('products', ProductController::class);
     
+    Route::get('filaments/stock', [FilamentController::class, 'stock'])->name('filaments.stock');
+    Route::post('filaments/{filament}/stock', [FilamentController::class, 'updateStock'])->name('filaments.update-stock');
     Route::resource('filaments', FilamentController::class);
     Route::resource('calibrations', CalibrationController::class);
     Route::resource('printers', \App\Http\Controllers\PrinterController::class)->except(['create', 'edit']);

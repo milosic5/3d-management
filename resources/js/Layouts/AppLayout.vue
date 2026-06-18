@@ -38,9 +38,12 @@
                     <PackageIcon class="w-5 h-5 mr-3" />
                     <span>{{ $t('nav.packagings') }}</span>
                 </Link>
-                <Link :href="route('filaments.index')" class="flex items-center px-3 py-2 rounded-md transition-colors" :class="route().current('filaments.*') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
+                <Link :href="route('filaments.index')" class="flex items-center px-3 py-2 rounded-md transition-colors" :class="route().current('filaments.index') || route().current('filaments.create') || route().current('filaments.edit') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
                     <LayersIcon class="w-5 h-5 mr-3" />
                     <span>{{ $t('nav.filaments') }}</span>
+                </Link>
+                <Link :href="route('filaments.stock')" class="flex items-center px-3 py-2 rounded-md transition-colors pl-8 text-sm" :class="route().current('filaments.stock') ? 'text-orange-500' : 'text-slate-400 hover:text-white'">
+                    <span>{{ $t('nav.filament_stock') || 'Filament Stock' }}</span>
                 </Link>
                 <Link :href="route('printers.index')" class="flex items-center justify-between px-3 py-2 rounded-md transition-colors" :class="route().current('printers.*') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
                     <div class="flex items-center">

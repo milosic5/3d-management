@@ -10,7 +10,8 @@ class Filament extends Model
 {
     protected $fillable = [
         'brand', 'name', 'material', 'color_name',
-        'color_hex', 'price_per_kg', 'empty_spool_weight_grams', 'notes'
+        'color_hex', 'price_per_kg', 'empty_spool_weight_grams', 'notes',
+        'stock_rolls'
     ];
 
     protected function casts(): array

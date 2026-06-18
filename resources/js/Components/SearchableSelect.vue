@@ -11,7 +11,7 @@
       <ChevronDownIcon class="h-4 w-4 opacity-50" />
     </div>
 
-    <div v-if="isOpen" class="absolute z-50 w-full mt-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md shadow-md max-h-60 overflow-hidden flex flex-col">
+    <div v-if="isOpen" class="absolute z-50 w-full mt-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md shadow-md flex flex-col max-h-80">
       <div class="p-2 border-b border-slate-200 dark:border-slate-800">
         <input 
           ref="searchInput"
@@ -22,7 +22,7 @@
           @click.stop
         />
       </div>
-      <div class="overflow-y-auto p-1">
+      <div class="overflow-y-auto p-1 flex-1 min-h-0">
         <div 
           v-for="option in filteredOptions" 
           :key="option.value"

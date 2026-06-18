@@ -37,14 +37,14 @@
         </Card>
 
         <!-- Dynamic Line Items -->
-        <Card class="p-0 overflow-hidden">
-            <div class="p-6 border-b flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
+        <Card class="p-0 overflow-visible">
+            <div class="p-6 border-b flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 rounded-t-xl">
                 <h3 class="text-lg font-semibold">{{ $t('orders.order_items') }}</h3>
                 <Button type="button" variant="outline" size="sm" @click="addItem"><PlusIcon class="w-4 h-4 mr-2" /> {{ $t('orders.add_item') }}</Button>
             </div>
             
             <div class="divide-y">
-                <div v-for="(item, i) in form.items" :key="i" class="p-6">
+                <div v-for="(item, i) in form.items" :key="i" class="p-6 last:rounded-b-xl">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="font-medium text-slate-700 dark:text-slate-300">{{ $t('orders.line_item') }} {{ i + 1 }}</h4>
                         <Button v-if="form.items.length > 1" type="button" variant="ghost" size="icon" @click="removeItem(i)" class="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">

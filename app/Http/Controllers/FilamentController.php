@@ -92,4 +92,21 @@ class FilamentController extends Controller
         $filament->delete();
         return redirect()->route('filaments.index');
     }
+
+    public function stock()
+    {
+        return Inertia::render('Filaments/Stock', [
+            'filaments' => Filament::orderBy('brand')->orderBy('name')->get()
+        ]);
+    }
+
+    public function updateStock(Request $request, Filament $filament)
+    {
+        $validated = $request->validate([
+            'stock_rolls' => 'required|integer|min:0',
+        ]);
+
+        $filament->update($validated);
+        return back()->with('success', 'Stock updated successfully.');
+    }
 }
