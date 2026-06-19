@@ -53,6 +53,15 @@
       </Card>
 
       <div id="stock-table-container" class="md:col-span-2">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-lg font-medium text-slate-800 dark:text-slate-200">
+            {{ $t('filaments.stock_list', 'Lista zaliha') }}
+          </h3>
+          <div class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 rounded-md font-semibold flex items-center gap-2 shadow-sm border border-indigo-100 dark:border-indigo-800">
+            <PackagePlusIcon class="w-4 h-4" />
+            <span>{{ totalStockKg }} kg {{ $t('common.total', 'ukupno') }}</span>
+          </div>
+        </div>
         <DataTable :data="filteredFilaments" :columns="columns" :page-size="15" searchable :search-placeholder="$t('filaments.search_placeholder') || 'Search filaments...'" v-model="searchQuery" row-clickable @row-click="handleRowClick">
           <template #filters>
             <select v-model="materialFilter" class="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
@@ -99,6 +108,10 @@ const filteredFilaments = computed(() => {
     .sort((a, b) => (b.stock_rolls || 0) - (a.stock_rolls || 0))
 })
 
+const totalStockKg = computed(() => {
+  return filteredFilaments.value.reduce((total, f) => total + (f.stock_rolls || 0), 0)
+})
+
 const form = useForm({
   filament_id: '',
   stock_rolls: 0
@@ -140,6 +153,7 @@ const submitStock = () => {
   
   form.post(route('filaments.update-stock', form.filament_id), {
     preserveScroll: true,
+    preserveState: true,
     onSuccess: () => {
       toast.success(t('filaments.stock_updated') || 'Stock updated successfully')
       form.reset()
@@ -152,7 +166,7 @@ const submitStock = () => {
 
 const columns = [
   { header: t('filaments.brand') || 'Brand', accessorKey: 'brand' },
-  { header: t('filaments.name') || 'Name', cell: ({ row }) => h('span', { class: 'font-semibold' }, row.original.name) },
+  { header: t('filaments.name') || 'Name', accessorKey: 'name', cell: ({ row }) => h('span', { class: 'font-semibold' }, row.original.name) },
   {
     header: t('filaments.material') || 'Material',
     accessorKey: 'material',
@@ -160,6 +174,7 @@ const columns = [
   },
   {
     header: t('filaments.color') || 'Color',
+    accessorKey: 'color_name',
     cell: ({ row }) => h(ColorSwatch, { colorHex: row.original.color_hex || '#ccc', colorName: row.original.color_name || 'N/A' })
   },
   {
