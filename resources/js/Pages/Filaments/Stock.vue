@@ -16,23 +16,23 @@
         <CardContent class="pt-4 grid grid-cols-5 gap-2 text-center">
           <div>
             <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.black }}</div>
-            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-800 dark:bg-black border border-slate-300 dark:border-slate-600"></span> Crna</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-800 dark:bg-black border border-slate-300 dark:border-slate-600"></span> Crna</div>
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.white }}</div>
-            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-white border border-slate-300 dark:border-slate-600"></span> Bela</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5"><span class="w-3 h-3 rounded-full bg-white border border-slate-300 dark:border-slate-600"></span> Bela</div>
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.gray }}</div>
-            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400 border border-slate-300 dark:border-slate-600"></span> Siva</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-400 border border-slate-300 dark:border-slate-600"></span> Siva</div>
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.green }}</div>
-            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 border border-slate-300 dark:border-slate-600"></span> Zelena</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5"><span class="w-3 h-3 rounded-full bg-green-500 border border-slate-300 dark:border-slate-600"></span> Zelena</div>
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.beige }}</div>
-            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-100 border border-slate-300 dark:border-slate-600"></span> Bež</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-100 border border-slate-300 dark:border-slate-600"></span> Bež</div>
           </div>
         </CardContent>
       </Card>
@@ -46,15 +46,15 @@
         <CardContent class="pt-4 grid grid-cols-3 gap-2 text-center">
           <div>
             <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.pla.black }}</div>
-            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-800 dark:bg-black border border-slate-300 dark:border-slate-600"></span> Crna</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-800 dark:bg-black border border-slate-300 dark:border-slate-600"></span> Crna</div>
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.pla.white }}</div>
-            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-white border border-slate-300 dark:border-slate-600"></span> Bela</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5"><span class="w-3 h-3 rounded-full bg-white border border-slate-300 dark:border-slate-600"></span> Bela</div>
           </div>
           <div>
             <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.pla.gray }}</div>
-            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400 border border-slate-300 dark:border-slate-600"></span> Siva</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-400 border border-slate-300 dark:border-slate-600"></span> Siva</div>
           </div>
         </CardContent>
       </Card>
