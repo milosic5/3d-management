@@ -5,6 +5,61 @@
     <PageHeader :title="$t('filaments.stock') || 'Filament Stock'" :description="$t('filaments.stock_description') || 'Manage your current filament stock levels.'">
     </PageHeader>
     
+    <!-- Color Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <Card class="shadow-sm">
+        <CardHeader class="pb-2 border-b border-slate-100 dark:border-slate-800">
+          <CardTitle class="text-sm font-semibold flex items-center gap-2 text-slate-700 dark:text-slate-300">
+            PETG Zalihe (Presek)
+          </CardTitle>
+        </CardHeader>
+        <CardContent class="pt-4 grid grid-cols-5 gap-2 text-center">
+          <div>
+            <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.black }}</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-800 dark:bg-black border border-slate-300 dark:border-slate-600"></span> Crna</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.white }}</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-white border border-slate-300 dark:border-slate-600"></span> Bela</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.gray }}</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400 border border-slate-300 dark:border-slate-600"></span> Siva</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.green }}</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 border border-slate-300 dark:border-slate-600"></span> Zelena</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.petg.beige }}</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-100 border border-slate-300 dark:border-slate-600"></span> Bež</div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card class="shadow-sm">
+        <CardHeader class="pb-2 border-b border-slate-100 dark:border-slate-800">
+          <CardTitle class="text-sm font-semibold flex items-center gap-2 text-slate-700 dark:text-slate-300">
+            PLA Zalihe (Presek)
+          </CardTitle>
+        </CardHeader>
+        <CardContent class="pt-4 grid grid-cols-3 gap-2 text-center">
+          <div>
+            <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.pla.black }}</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-800 dark:bg-black border border-slate-300 dark:border-slate-600"></span> Crna</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.pla.white }}</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-white border border-slate-300 dark:border-slate-600"></span> Bela</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold text-slate-800 dark:text-slate-100">{{ summary.pla.gray }}</div>
+            <div class="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400 border border-slate-300 dark:border-slate-600"></span> Siva</div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+    
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
       <Card id="stock-form-card" class="md:col-span-1 shadow-sm h-fit">
         <CardHeader class="pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -110,6 +165,35 @@ const filteredFilaments = computed(() => {
 
 const totalStockKg = computed(() => {
   return filteredFilaments.value.reduce((total, f) => total + (f.stock_rolls || 0), 0)
+})
+
+const getSummary = (material, colorKeywords) => {
+  return props.filaments.reduce((total, f) => {
+    if (f.material?.toLowerCase() === material.toLowerCase()) {
+      const colorName = (f.color_name || '').toLowerCase()
+      if (colorKeywords.some(keyword => colorName.includes(keyword))) {
+        return total + (f.stock_rolls || 0)
+      }
+    }
+    return total
+  }, 0)
+}
+
+const summary = computed(() => {
+  return {
+    petg: {
+      black: getSummary('petg', ['crn', 'black', 'blk']),
+      white: getSummary('petg', ['bel', 'white', 'wht']),
+      gray: getSummary('petg', ['siv', 'gray', 'grey']),
+      green: getSummary('petg', ['zelen', 'green']),
+      beige: getSummary('petg', ['bez', 'bež', 'beige']),
+    },
+    pla: {
+      black: getSummary('pla', ['crn', 'black', 'blk']),
+      white: getSummary('pla', ['bel', 'white', 'wht']),
+      gray: getSummary('pla', ['siv', 'gray', 'grey']),
+    }
+  }
 })
 
 const form = useForm({
