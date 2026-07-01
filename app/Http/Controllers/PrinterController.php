@@ -88,21 +88,33 @@ class PrinterController extends Controller
         ]);
 
         $now = now();
-        if ($now->day >= 28) {
-            $targetMonth = $now->copy()->addMonth()->startOfMonth();
+        if ($now->day <= 15) {
+            $targetMonth = $now->copy()->subMonth()->startOfMonth();
         } else {
             $targetMonth = $now->copy()->startOfMonth();
         }
 
         $hoursPrintedThisMonth = $validated['working_hours_at_maintenance'] - $printer->total_working_hours;
 
-        \App\Models\PrinterMaintenance::create([
-            'printer_id' => $printer->id,
-            'maintenance_month' => $targetMonth->format('Y-m-d'),
-            'working_hours_at_maintenance' => $validated['working_hours_at_maintenance'],
-            'hours_printed_this_month' => $hoursPrintedThisMonth,
-            'lubricated' => $validated['lubricated'],
-        ]);
+        $maintenance = \App\Models\PrinterMaintenance::where('printer_id', $printer->id)
+            ->where('maintenance_month', $targetMonth->format('Y-m-d'))
+            ->first();
+
+        if ($maintenance) {
+            $maintenance->update([
+                'working_hours_at_maintenance' => $validated['working_hours_at_maintenance'],
+                'hours_printed_this_month' => $maintenance->hours_printed_this_month + $hoursPrintedThisMonth,
+                'lubricated' => $validated['lubricated'],
+            ]);
+        } else {
+            \App\Models\PrinterMaintenance::create([
+                'printer_id' => $printer->id,
+                'maintenance_month' => $targetMonth->format('Y-m-d'),
+                'working_hours_at_maintenance' => $validated['working_hours_at_maintenance'],
+                'hours_printed_this_month' => $hoursPrintedThisMonth,
+                'lubricated' => $validated['lubricated'],
+            ]);
+        }
 
         $printer->update([
             'total_working_hours' => $validated['working_hours_at_maintenance'],
