@@ -1,0 +1,1 @@
+import{H as e,f as t,tt as n,w as r,wt as i,x as a}from"./index.esm-DWj7yQJY.js";var o={class:`text-sm text-red-600 dark:text-red-400`},s={__name:`InputError`,props:{message:{type:String}},setup(s){return(c,l)=>n((e(),r(`div`,null,[a(`p`,o,i(s.message),1)],512)),[[t,s.message]])}};export{s as t};
