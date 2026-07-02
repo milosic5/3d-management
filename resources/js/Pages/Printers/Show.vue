@@ -108,6 +108,10 @@
         </h2>
         <form @submit.prevent="submitEdit">
           <div class="mb-4">
+            <InputLabel for="maintenance_month" value="Mesec" />
+            <TextInput id="maintenance_month" type="month" class="mt-1 block w-full" v-model="editForm.maintenance_month" required />
+          </div>
+          <div class="mb-4">
             <InputLabel for="working_hours" value="Upisani sati (ukupni)" />
             <TextInput id="working_hours" type="number" class="mt-1 block w-full" v-model="editForm.working_hours_at_maintenance" required />
           </div>
@@ -168,6 +172,7 @@ const maintenanceToEdit = ref(null)
 const maintenanceToDelete = ref(null)
 
 const editForm = useForm({
+  maintenance_month: '',
   working_hours_at_maintenance: 0,
   hours_printed_this_month: 0,
   lubricated: false,
@@ -175,6 +180,9 @@ const editForm = useForm({
 
 const openEditModal = (m) => {
   maintenanceToEdit.value = m
+  const dateObj = new Date(m.maintenance_month)
+  const monthStr = String(dateObj.getMonth() + 1).padStart(2, '0')
+  editForm.maintenance_month = `${dateObj.getFullYear()}-${monthStr}`
   editForm.working_hours_at_maintenance = m.working_hours_at_maintenance
   editForm.hours_printed_this_month = m.hours_printed_this_month
   editForm.lubricated = m.lubricated ? true : false

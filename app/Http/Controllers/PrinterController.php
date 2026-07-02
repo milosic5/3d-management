@@ -132,10 +132,13 @@ class PrinterController extends Controller
     public function updateMaintenance(Request $request, \App\Models\PrinterMaintenance $maintenance)
     {
         $validated = $request->validate([
+            'maintenance_month' => 'required|date_format:Y-m',
             'working_hours_at_maintenance' => 'required|integer|min:0',
             'hours_printed_this_month' => 'required|integer|min:0',
             'lubricated' => 'required|boolean',
         ]);
+
+        $validated['maintenance_month'] .= '-01';
 
         $maintenance->update($validated);
         return back();
