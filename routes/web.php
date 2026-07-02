@@ -43,7 +43,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('printers', \App\Http\Controllers\PrinterController::class)->except(['create', 'edit']);
     Route::post('printers/{printer}/reset-nozzle', [\App\Http\Controllers\PrinterController::class, 'resetNozzle'])->name('printers.reset-nozzle');
     Route::post('printers/{printer}/maintenance', [\App\Http\Controllers\PrinterController::class, 'storeMaintenance'])->name('printers.maintenance');
-
+    Route::put('maintenances/{maintenance}', [\App\Http\Controllers\PrinterController::class, 'updateMaintenance'])->name('maintenances.update');
+    Route::delete('maintenances/{maintenance}', [\App\Http\Controllers\PrinterController::class, 'destroyMaintenance'])->name('maintenances.destroy');
     Route::post('packagings/{packaging}/add-stock', [\App\Http\Controllers\PackagingController::class, 'addStock'])->name('packagings.add-stock');
     Route::post('packagings/{packaging}/remove-stock', [\App\Http\Controllers\PackagingController::class, 'removeStock'])->name('packagings.remove-stock');
     Route::resource('packagings', \App\Http\Controllers\PackagingController::class)->except(['create', 'edit', 'show']);

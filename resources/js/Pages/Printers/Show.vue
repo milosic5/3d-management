@@ -39,6 +39,7 @@
                   <th class="px-6 py-3">Upisani sati</th>
                   <th class="px-6 py-3">Sati u mesecu</th>
                   <th class="px-6 py-3">Podmazan</th>
+                  <th class="px-6 py-3 text-right">Akcije</th>
                 </tr>
               </thead>
               <tbody>
@@ -49,6 +50,14 @@
                   <td class="px-6 py-4">
                     <Badge v-if="m.lubricated" class="bg-green-100 text-green-700 hover:bg-green-100 border-none">Da</Badge>
                     <Badge v-else class="bg-red-100 text-red-700 hover:bg-red-100 border-none">Ne</Badge>
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <button @click="openEditModal(m)" class="text-blue-500 hover:text-blue-700 mr-3" title="Izmeni">
+                      <PencilIcon class="w-4 h-4 inline" />
+                    </button>
+                    <button @click="confirmDelete(m)" class="text-red-500 hover:text-red-700" title="Obriši">
+                      <TrashIcon class="w-4 h-4 inline" />
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -90,17 +99,60 @@
         </div>
       </Card>
     </div>
+    
+    <Modal :show="isEditModalOpen" @close="closeEditModal" maxWidth="md">
+      <div class="p-6">
+        <h2 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center">
+          <PencilIcon class="w-5 h-5 mr-2 text-blue-500" />
+          Izmeni održavanje
+        </h2>
+        <form @submit.prevent="submitEdit">
+          <div class="mb-4">
+            <InputLabel for="working_hours" value="Upisani sati (ukupni)" />
+            <TextInput id="working_hours" type="number" class="mt-1 block w-full" v-model="editForm.working_hours_at_maintenance" required />
+          </div>
+          <div class="mb-4">
+            <InputLabel for="hours_printed" value="Sati u mesecu (razlika)" />
+            <TextInput id="hours_printed" type="number" class="mt-1 block w-full" v-model="editForm.hours_printed_this_month" required />
+          </div>
+          <div class="mb-6 flex items-center mt-6">
+            <Checkbox id="lubricated" v-model:checked="editForm.lubricated" />
+            <InputLabel for="lubricated" value="Podmazan?" class="ml-2 mb-0 cursor-pointer" />
+          </div>
+          <div class="flex items-center justify-end mt-4">
+            <SecondaryButton @click="closeEditModal" class="mr-2">Otkaži</SecondaryButton>
+            <PrimaryButton :class="{ 'opacity-25': editForm.processing }" :disabled="editForm.processing">Sačuvaj</PrimaryButton>
+          </div>
+        </form>
+      </div>
+    </Modal>
+
+    <ConfirmDialog 
+      v-model:isOpen="isDeleteDialogOpen"
+      title="Brisanje održavanja"
+      description="Da li ste sigurni da želite da obrišete ovaj zapis o održavanju? Ova akcija je nepovratna."
+      :processing="isDeleting"
+      @confirm="deleteMaintenance"
+    />
   </AppLayout>
 </template>
 
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { ref } from 'vue'
+import { Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import PageHeader from '@/Components/PageHeader.vue'
 import { Card } from '@/Components/ui/card'
 import { Button } from '@/Components/ui/button'
 import { Badge } from '@/Components/ui/badge'
-import { WrenchIcon, RotateCcwIcon } from 'lucide-vue-next'
+import { WrenchIcon, RotateCcwIcon, PencilIcon, TrashIcon } from 'lucide-vue-next'
+import Modal from '@/Components/Modal.vue'
+import TextInput from '@/Components/TextInput.vue'
+import InputLabel from '@/Components/InputLabel.vue'
+import Checkbox from '@/Components/Checkbox.vue'
+import PrimaryButton from '@/Components/PrimaryButton.vue'
+import SecondaryButton from '@/Components/SecondaryButton.vue'
+import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 
 const props = defineProps({
     printer: {
@@ -108,4 +160,55 @@ const props = defineProps({
         required: true
     }
 })
+
+const isEditModalOpen = ref(false)
+const isDeleteDialogOpen = ref(false)
+const isDeleting = ref(false)
+const maintenanceToEdit = ref(null)
+const maintenanceToDelete = ref(null)
+
+const editForm = useForm({
+  working_hours_at_maintenance: 0,
+  hours_printed_this_month: 0,
+  lubricated: false,
+})
+
+const openEditModal = (m) => {
+  maintenanceToEdit.value = m
+  editForm.working_hours_at_maintenance = m.working_hours_at_maintenance
+  editForm.hours_printed_this_month = m.hours_printed_this_month
+  editForm.lubricated = m.lubricated ? true : false
+  isEditModalOpen.value = true
+}
+
+const closeEditModal = () => {
+  isEditModalOpen.value = false
+  editForm.reset()
+}
+
+const submitEdit = () => {
+  editForm.put(route('maintenances.update', maintenanceToEdit.value.id), {
+    preserveScroll: true,
+    onSuccess: () => closeEditModal(),
+  })
+}
+
+const confirmDelete = (m) => {
+  maintenanceToDelete.value = m
+  isDeleteDialogOpen.value = true
+}
+
+const deleteMaintenance = () => {
+  isDeleting.value = true
+  router.delete(route('maintenances.destroy', maintenanceToDelete.value.id), {
+    preserveScroll: true,
+    onSuccess: () => {
+      isDeleteDialogOpen.value = false
+      isDeleting.value = false
+    },
+    onError: () => {
+      isDeleting.value = false
+    }
+  })
+}
 </script>

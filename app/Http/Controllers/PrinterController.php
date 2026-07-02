@@ -128,4 +128,22 @@ class PrinterController extends Controller
         $printer->delete();
         return back();
     }
+
+    public function updateMaintenance(Request $request, \App\Models\PrinterMaintenance $maintenance)
+    {
+        $validated = $request->validate([
+            'working_hours_at_maintenance' => 'required|integer|min:0',
+            'hours_printed_this_month' => 'required|integer|min:0',
+            'lubricated' => 'required|boolean',
+        ]);
+
+        $maintenance->update($validated);
+        return back();
+    }
+
+    public function destroyMaintenance(\App\Models\PrinterMaintenance $maintenance)
+    {
+        $maintenance->delete();
+        return back();
+    }
 }
