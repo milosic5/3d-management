@@ -82,6 +82,7 @@ class OrderController extends Controller
             'items.*.print_time_minutes' => 'nullable|integer|min:0',
             'items.*.color_name' => 'nullable|string',
             'items.*.color_hex' => 'nullable|string|size:7',
+            'items.*.weight_grams' => 'nullable|numeric|min:0',
             'items.*.notes' => 'nullable|string',
         ]);
 
@@ -114,7 +115,7 @@ class OrderController extends Controller
                     'unit_price' => $item['unit_price'],
                     'print_cost' => $item['print_cost'] ?? 0,
                     'print_time_minutes' => $item['print_time_minutes'] ?? $product->print_time_minutes,
-                    'weight_grams' => $product->weight_grams,
+                    'weight_grams' => $item['weight_grams'] ?? $product->weight_grams,
                     'color_name' => $filament ? $filament->color_name : ($item['color_name'] ?? $product->color_name),
                     'color_hex' => $filament ? $filament->color_hex : ($item['color_hex'] ?? $product->color_hex),
                     'notes' => $item['notes'] ?? null,
@@ -173,6 +174,7 @@ class OrderController extends Controller
                 'items.*.print_time_minutes' => 'nullable|integer|min:0',
                 'items.*.color_name' => 'nullable|string',
                 'items.*.color_hex' => 'nullable|string|size:7',
+                'items.*.weight_grams' => 'nullable|numeric|min:0',
                 'items.*.notes' => 'nullable|string',
             ]);
 
@@ -206,7 +208,7 @@ class OrderController extends Controller
                         'unit_price' => $item['unit_price'],
                         'print_cost' => $item['print_cost'] ?? 0,
                         'print_time_minutes' => $item['print_time_minutes'] ?? $product->print_time_minutes,
-                        'weight_grams' => $product->weight_grams,
+                        'weight_grams' => $item['weight_grams'] ?? $product->weight_grams,
                         'color_name' => $filament ? $filament->color_name : ($item['color_name'] ?? $product->color_name),
                         'color_hex' => $filament ? $filament->color_hex : ($item['color_hex'] ?? $product->color_hex),
                         'notes' => $item['notes'] ?? null,

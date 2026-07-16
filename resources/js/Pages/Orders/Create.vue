@@ -83,22 +83,27 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mt-4">
-                        <div class="md:col-span-3 block">
+                    <div class="grid grid-cols-1 md:grid-cols-10 gap-4 mt-4">
+                        <div class="md:col-span-2 block">
                             <label class="block text-xs font-medium mb-1">{{ $t('orders.print_cost') }}</label>
                             <Input type="number" step="0.01" v-model="item.print_cost" @change="onManualCostChange(item)" class="w-full bg-slate-50 dark:bg-slate-800" />
                             <div class="text-red-500 text-sm mt-1" v-if="form.errors[`items.${i}.print_cost`]">{{ form.errors[`items.${i}.print_cost`] }}</div>
                         </div>
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-2">
                             <label class="block text-xs font-medium mb-1">{{ $t('products.print_time_col') }} (min) *</label>
                             <Input type="number" v-model="item.print_time_minutes" required min="0" class="w-full" />
                             <div class="text-red-500 text-sm mt-1" v-if="form.errors[`items.${i}.print_time_minutes`]">{{ form.errors[`items.${i}.print_time_minutes`] }}</div>
                         </div>
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-medium mb-1">{{ $t('products.weight_col') }}</label>
+                            <Input type="number" step="0.01" v-model="item.weight_grams" min="0" class="w-full" />
+                            <div class="text-red-500 text-sm mt-1" v-if="form.errors[`items.${i}.weight_grams`]">{{ form.errors[`items.${i}.weight_grams`] }}</div>
+                        </div>
+                        <div class="md:col-span-2">
                             <label class="block text-xs font-medium mb-1">{{ $t('orders.unit_price') }} *</label>
                             <Input type="number" step="0.01" v-model="item.unit_price" required min="0" class="w-full" />
                         </div>
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-2">
                             <label class="block text-xs font-medium mb-1">{{ $t('orders.line_total') }}</label>
                             <div class="h-10 px-3 py-2 flex items-center bg-transparent border border-transparent font-mono font-bold text-orange-600">
                                 {{ (item.quantity * item.unit_price).toFixed(2) }} {{ $t('common.currency') }}
@@ -186,18 +191,18 @@ const getLocalISOString = () => {
 }
 
 const form = useForm({
-    customer_name: '',
+    customer_name: 'KP',
     created_at: getLocalISOString(),
     notes: '',
     status: 'received',
     estimated_print_minutes: null,
     items: [
-        { product_id: '', filament_id: '', quantity: 1, unit_price: 0, print_cost: 0, print_time_minutes: 0, color_name: '', color_hex: '', notes: '', _base_unit_cost: 0 }
+        { product_id: '', filament_id: '', quantity: 1, unit_price: 0, print_cost: 0, print_time_minutes: 0, weight_grams: 0, color_name: '', color_hex: '', notes: '', _base_unit_cost: 0 }
     ]
 })
 
 const addItem = () => {
-    form.items.push({ product_id: '', filament_id: '', quantity: 1, unit_price: 0, print_cost: 0, print_time_minutes: 0, color_name: '', color_hex: '', notes: '', _base_unit_cost: 0 })
+    form.items.push({ product_id: '', filament_id: '', quantity: 1, unit_price: 0, print_cost: 0, print_time_minutes: 0, weight_grams: 0, color_name: '', color_hex: '', notes: '', _base_unit_cost: 0 })
 }
 const removeItem = (i) => form.items.splice(i, 1)
 
@@ -207,6 +212,7 @@ const onProductSelect = (item, val) => {
     if (matched) {
         item.unit_price = matched.price;
         item.print_time_minutes = matched.print_time_minutes;
+        item.weight_grams = matched.weight_grams || 0;
         item.color_hex = matched.color_hex;
         item.color_name = matched.color_name;
         
