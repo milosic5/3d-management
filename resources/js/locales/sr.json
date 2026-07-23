@@ -239,6 +239,7 @@
     "est_total_print_time": "Proc. ukupno vreme štampe:",
     "total_filament_used": "Ukupno filamenta:",
     "total_quote": "Ukupna cena:",
+    "filament_used": "Utrošeno filamenta",
     "delete_confirm": "Da li ste sigurni da želite da obrišete ovu porudžbinu? Ova radnja se ne može poništiti."
   },
   "calibrations": {
