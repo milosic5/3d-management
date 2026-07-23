@@ -148,7 +148,7 @@ const totalItemsCount = computed(() => {
 })
 
 const totalWeight = computed(() => {
-    return props.order.items.reduce((acc, curr) => acc + (curr.weight_grams * curr.quantity), 0)
+    return props.order.items.reduce((acc, curr) => acc + Number(curr.weight_grams || 0), 0)
 })
 
 const printMins = ref(props.order.estimated_print_minutes)

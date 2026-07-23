@@ -137,7 +137,7 @@ const columns = [
     header: t('orders.filament_used'),
     cell: ({ row }) => {
         const items = row.original.items || []
-        const totalGrams = items.reduce((sum, item) => sum + (Number(item.weight_grams) || 0) * (item.quantity || 1), 0)
+        const totalGrams = items.reduce((sum, item) => sum + (Number(item.weight_grams) || 0), 0)
         return h('span', { class: 'text-slate-500 font-medium' }, `${totalGrams}g`)
     }
   },

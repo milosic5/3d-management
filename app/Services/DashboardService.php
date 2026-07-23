@@ -99,7 +99,7 @@ class DashboardService
             ->select(
                 DB::raw('COUNT(DISTINCT orders.id) as total_prints'),
                 DB::raw('SUM(order_items.print_time_minutes) as total_minutes'),
-                DB::raw('SUM(order_items.weight_grams * order_items.quantity) as total_grams')
+                DB::raw('SUM(order_items.weight_grams) as total_grams')
             )->first();
             
         $queueMinutes = Order::whereIn('status', ['received', 'printing'])->sum('estimated_print_minutes');
