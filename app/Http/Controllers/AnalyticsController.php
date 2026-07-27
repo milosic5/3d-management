@@ -53,19 +53,19 @@ class AnalyticsController extends Controller
     {
         // Revenue per month
         $revenue = DB::table('orders')
-            ->select(DB::raw("strftime('%Y-%m', created_at) as month"), DB::raw('SUM(total_price) as revenue'))
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"), DB::raw('SUM(total_price) as revenue'))
             ->where('status', 'delivered')
             ->whereBetween('created_at', [$start, $end])
-            ->groupByRaw("strftime('%Y-%m', created_at)")
+            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
             ->orderBy('month')
             ->get()
             ->keyBy('month');
 
         // Costs per month
         $costs = DB::table('investments')
-            ->select(DB::raw("strftime('%Y-%m', invested_at) as month"), DB::raw('SUM(amount) as costs'))
+            ->select(DB::raw("DATE_FORMAT(invested_at, '%Y-%m') as month"), DB::raw('SUM(amount) as costs'))
             ->whereBetween('invested_at', [$start, $end])
-            ->groupByRaw("strftime('%Y-%m', invested_at)")
+            ->groupByRaw("DATE_FORMAT(invested_at, '%Y-%m')")
             ->orderBy('month')
             ->get()
             ->keyBy('month');
@@ -174,13 +174,13 @@ class AnalyticsController extends Controller
     {
         return DB::table('orders')
             ->select(
-                DB::raw("strftime('%Y-%m', created_at) as month"),
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
                 DB::raw('COUNT(*) as total'),
                 DB::raw("SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) as delivered"),
                 DB::raw("SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) as cancelled")
             )
             ->whereBetween('created_at', [$start, $end])
-            ->groupByRaw("strftime('%Y-%m', created_at)")
+            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
             ->orderBy('month')
             ->get()
             ->toArray();

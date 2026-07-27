@@ -55,17 +55,17 @@ class DashboardService
         [$start, $end] = $this->getDateRange($period);
 
         $revenue = DB::table('orders')
-            ->select(DB::raw("strftime('%Y-%m', created_at) as month"), DB::raw('SUM(total_price) as revenue'))
+            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"), DB::raw('SUM(total_price) as revenue'))
             ->where('status', 'delivered')
             ->whereBetween('created_at', [$start, $end])
-            ->groupByRaw("strftime('%Y-%m', created_at)")
+            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
             ->orderBy('month')
             ->get()->keyBy('month');
 
         $costs = DB::table('investments')
-            ->select(DB::raw("strftime('%Y-%m', invested_at) as month"), DB::raw('SUM(amount) as costs'))
+            ->select(DB::raw("DATE_FORMAT(invested_at, '%Y-%m') as month"), DB::raw('SUM(amount) as costs'))
             ->whereBetween('invested_at', [$start, $end])
-            ->groupByRaw("strftime('%Y-%m', invested_at)")
+            ->groupByRaw("DATE_FORMAT(invested_at, '%Y-%m')")
             ->orderBy('month')
             ->get()->keyBy('month');
 
@@ -112,13 +112,13 @@ class DashboardService
 
         return DB::table('orders')
             ->select(
-                DB::raw("strftime('%Y-%m', created_at) as month"),
+                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
                 DB::raw('SUM(total_price) as revenue'),
                 DB::raw('COUNT(*) as orders')
             )
             ->where('status', 'delivered')
             ->whereBetween('created_at', [$start, $end])
-            ->groupByRaw("strftime('%Y-%m', created_at)")
+            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
             ->orderBy('month')
             ->get()
             ->toArray();
