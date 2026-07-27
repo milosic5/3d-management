@@ -129,7 +129,7 @@ class AnalyticsController extends Controller
      */
     private function getProductProfitability(Carbon $start, Carbon $end): array
     {
-        return DB::table('order_items')
+        $rows = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->leftJoin('filaments', 'order_items.filament_id', '=', 'filaments.id')
@@ -152,11 +152,16 @@ class AnalyticsController extends Controller
             ->whereBetween('orders.created_at', [$start, $end])
             ->groupBy('products.id', 'products.name', 'products.color_hex')
             ->orderByDesc('revenue')
-            ->limit(15)
             ->get()
+            ->toArray();
+
+        return $this->groupCepovi($rows)
+            ->sortByDesc('revenue')
+            ->take(15)
             ->map(function ($row) {
-                $revenue      = (float) $row->revenue;
-                $costs        = (float) $row->print_costs + (float) $row->filament_cost;
+                $row = (object) $row;
+                $revenue      = (float) ($row->revenue ?? 0);
+                $costs        = (float) ($row->print_costs ?? 0) + (float) ($row->filament_cost ?? 0);
                 $profit       = $revenue - $costs;
                 $margin       = $revenue > 0 ? round($profit / $revenue * 100, 1) : 0;
                 return array_merge((array) $row, [
@@ -164,6 +169,7 @@ class AnalyticsController extends Controller
                     'margin'       => $margin,
                 ]);
             })
+            ->values()
             ->toArray();
     }
 
@@ -184,5 +190,45 @@ class AnalyticsController extends Controller
             ->orderBy('month')
             ->get()
             ->toArray();
+    }
+
+    /**
+     * Merge all rows whose name contains "cep" or "čep" (case-insensitive)
+     * into a single "Cepovi" entry, summing numeric columns.
+     */
+    private function groupCepovi(array $rows): \Illuminate\Support\Collection
+    {
+        $cepPattern = '/[čc]ep/iu';
+
+        $grouped = collect($rows)->groupBy(function ($row) use ($cepPattern) {
+            $name = is_array($row) ? $row['name'] : $row->name;
+            return preg_match($cepPattern, $name) ? '__cepovi__' : $name;
+        });
+
+        return $grouped->map(function ($items, $key) {
+            $first = (array) $items->first();
+
+            if ($key !== '__cepovi__') {
+                return $first;
+            }
+
+            // Sum all numeric fields; average the avg_price field if exists
+            $summed = $first;
+            $summed['name']      = 'Cepovi';
+            $summed['color_hex'] = '#f97316';
+
+            foreach ($first as $col => $val) {
+                if ($col === 'name' || $col === 'color_hex' || $col === 'id') continue;
+                if (is_numeric($val)) {
+                    $summed[$col] = $items->sum(fn($i) => (float)((array)$i)[$col]);
+                }
+            }
+
+            if (array_key_exists('avg_price', $summed)) {
+                $summed['avg_price'] = $items->avg(fn($i) => (float)((array)$i)['avg_price']);
+            }
+
+            return $summed;
+        })->values();
     }
 }

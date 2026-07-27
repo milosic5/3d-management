@@ -93,7 +93,7 @@ class DashboardService
     public function getRevenueByProduct($period)
     {
         [$start, $end] = $this->getDateRange($period);
-        return DB::table('order_items')
+        $rows = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->select('products.name', 'products.color_hex', DB::raw('SUM(order_items.unit_price * order_items.quantity) as revenue'))
@@ -101,8 +101,13 @@ class DashboardService
             ->whereBetween('orders.created_at', [$start, $end])
             ->groupBy('products.id', 'products.name', 'products.color_hex')
             ->orderByDesc('revenue')
-            ->limit(8)
             ->get()
+            ->toArray();
+
+        return $this->groupCepovi($rows, 'revenue')
+            ->sortByDesc('revenue')
+            ->take(8)
+            ->values()
             ->toArray();
     }
 
@@ -165,11 +170,11 @@ class DashboardService
 
     public function getTopProducts()
     {
-        return DB::table('order_items')
+        $rows = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->select(
-                'products.name', 
+                'products.name',
                 'products.color_hex',
                 DB::raw('SUM(order_items.quantity) as units_sold'),
                 DB::raw('SUM(order_items.unit_price * order_items.quantity) as revenue'),
@@ -179,7 +184,54 @@ class DashboardService
             ->where('orders.status', 'delivered')
             ->groupBy('products.id', 'products.name', 'products.color_hex')
             ->orderByDesc('revenue')
-            ->limit(5)
-            ->get();
+            ->get()
+            ->toArray();
+
+        return $this->groupCepovi($rows, 'revenue')
+            ->sortByDesc('revenue')
+            ->take(5)
+            ->values();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Merge all rows whose name contains "cep" or "čep" (case-insensitive)
+     * into a single "Cepovi" entry, summing numeric columns.
+     */
+    private function groupCepovi(array $rows, string ...$sumKeys): \Illuminate\Support\Collection
+    {
+        $cepPattern = '/[čc]ep/iu';
+
+        $grouped = collect($rows)->groupBy(function ($row) use ($cepPattern) {
+            $name = is_array($row) ? $row['name'] : $row->name;
+            return preg_match($cepPattern, $name) ? '__cepovi__' : $name;
+        });
+
+        return $grouped->map(function ($items, $key) {
+            $first = (array) $items->first();
+
+            if ($key !== '__cepovi__') {
+                return $first;
+            }
+
+            // Sum all numeric fields; average the avg_price field
+            $summed = $first;
+            $summed['name']      = 'Cepovi';
+            $summed['color_hex'] = '#f97316';
+
+            foreach ($first as $col => $val) {
+                if ($col === 'name' || $col === 'color_hex') continue;
+                if (is_numeric($val)) {
+                    $summed[$col] = $items->sum(fn($i) => (float)((array)$i)[$col]);
+                }
+            }
+
+            if (array_key_exists('avg_price', $summed)) {
+                $summed['avg_price'] = $items->avg(fn($i) => (float)((array)$i)['avg_price']);
+            }
+
+            return $summed;
+        })->values();
     }
 }
