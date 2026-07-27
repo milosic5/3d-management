@@ -19,6 +19,14 @@
             <option value="cancelled">{{ $t('status.cancelled') }}</option>
         </select>
         <StatusBadge :status="order.status" class="ml-4" />
+        <Link :href="route('orders.edit', order.id)" class="ml-3">
+            <Button variant="outline" size="sm" class="dark:border-slate-700 dark:text-slate-200">
+                <PencilIcon class="w-4 h-4 mr-1" /> {{ $t('common.edit') }}
+            </Button>
+        </Link>
+        <a :href="route('export.order.pdf', order.id)" class="ml-2 inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors">
+            <FileTextIcon class="w-4 h-4 mr-1.5" /> PDF
+        </a>
       </template>
     </PageHeader>
 
@@ -63,6 +71,38 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </Card>
+
+            <!-- Order History Timeline -->
+            <Card class="p-0 overflow-hidden" v-if="order.history && order.history.length">
+                <div class="p-5 border-b bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-2">
+                    <ClockIcon class="w-4 h-4 text-slate-500" />
+                    <h3 class="text-base font-semibold">{{ $t('orders.history_title') || 'Order History' }}</h3>
+                </div>
+                <div class="p-5">
+                    <ol class="relative border-l border-slate-200 dark:border-slate-700 space-y-6 ml-3">
+                        <li v-for="entry in order.history" :key="entry.id" class="ml-6">
+                            <!-- Timeline dot -->
+                            <span class="absolute -left-[9px] flex items-center justify-center w-4 h-4 rounded-full ring-2 ring-white dark:ring-slate-950"
+                                  :class="historyDotClass(entry)">
+                            </span>
+
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                        {{ historyActionLabel(entry) }}
+                                    </p>
+                                    <p class="text-xs text-slate-500 mt-0.5">
+                                        {{ $t('orders.history_by') || 'by' }} <span class="font-medium">{{ entry.user?.name || '—' }}</span>
+                                    </p>
+                                </div>
+                                <time class="text-xs text-slate-400 whitespace-nowrap ml-4">
+                                    {{ formatHistoryDate(entry.created_at) }}
+                                </time>
+                            </div>
+                        </li>
+                    </ol>
                 </div>
             </Card>
         </div>
@@ -126,7 +166,8 @@ import StatusBadge from '@/Components/StatusBadge.vue'
 import MaterialBadge from '@/Components/MaterialBadge.vue'
 import ColorSwatch from '@/Components/ColorSwatch.vue'
 import { Card } from '@/Components/ui/card'
-import { BoxIcon } from 'lucide-vue-next'
+import { Button } from '@/Components/ui/button'
+import { BoxIcon, PencilIcon, ClockIcon, FileTextIcon } from 'lucide-vue-next'
 import { usePrintTime } from '@/composables/usePrintTime'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
@@ -153,4 +194,34 @@ const totalWeight = computed(() => {
 
 const printMins = ref(props.order.estimated_print_minutes)
 const { formattedPrintTime: formattedTime } = usePrintTime(printMins)
+
+// ── History helpers ───────────────────────────────────────────────────────────
+
+const historyDotClass = (entry) => {
+    const map = {
+        created:        'bg-green-500',
+        status_changed: 'bg-blue-500',
+        updated:        'bg-orange-400',
+    }
+    return map[entry.action] || 'bg-slate-400'
+}
+
+const historyActionLabel = (entry) => {
+    if (entry.action === 'created') {
+        return t('orders.history_created') || `Order created (${entry.to_status})`
+    }
+    if (entry.action === 'status_changed') {
+        const from = entry.from_status ? t('status.' + entry.from_status) : '—'
+        const to   = entry.to_status   ? t('status.' + entry.to_status)   : '—'
+        return `${from} → ${to}`
+    }
+    if (entry.action === 'updated') {
+        return t('orders.history_updated') || 'Order details updated'
+    }
+    return entry.action
+}
+
+const formatHistoryDate = (dateStr) => {
+    return new Date(dateStr).toLocaleString()
+}
 </script>

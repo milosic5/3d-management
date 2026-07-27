@@ -26,10 +26,19 @@
                     <LayoutDashboardIcon class="w-5 h-5 mr-3" />
                     <span>{{ $t('nav.dashboard') }}</span>
                 </Link>
-                <Link :href="route('orders.index')" class="flex items-center px-3 py-2 rounded-md transition-colors" :class="route().current('orders.*') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
-                    <ClipboardListIcon class="w-5 h-5 mr-3" />
-                    <span>{{ $t('nav.orders') }}</span>
+
+                <!-- Orders with active badge -->
+                <Link :href="route('orders.index')" class="flex items-center justify-between px-3 py-2 rounded-md transition-colors" :class="route().current('orders.*') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
+                    <div class="flex items-center">
+                        <ClipboardListIcon class="w-5 h-5 mr-3" />
+                        <span>{{ $t('nav.orders') }}</span>
+                    </div>
+                    <span v-if="notifications.activeOrders > 0"
+                          class="ml-auto bg-orange-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none">
+                        {{ notifications.activeOrders }}
+                    </span>
                 </Link>
+
                 <Link :href="route('products.index')" class="flex items-center px-3 py-2 rounded-md transition-colors" :class="route().current('products.*') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
                     <BoxIcon class="w-5 h-5 mr-3" />
                     <span>{{ $t('nav.products') }}</span>
@@ -38,21 +47,38 @@
                     <PackageIcon class="w-5 h-5 mr-3" />
                     <span>{{ $t('nav.packagings') }}</span>
                 </Link>
-                <Link :href="route('filaments.index')" class="flex items-center px-3 py-2 rounded-md transition-colors" :class="route().current('filaments.index') || route().current('filaments.create') || route().current('filaments.edit') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
-                    <LayersIcon class="w-5 h-5 mr-3" />
-                    <span>{{ $t('nav.filaments') }}</span>
+
+                <!-- Filaments with out-of-stock badge -->
+                <Link :href="route('filaments.index')" class="flex items-center justify-between px-3 py-2 rounded-md transition-colors" :class="route().current('filaments.index') || route().current('filaments.create') || route().current('filaments.edit') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
+                    <div class="flex items-center">
+                        <LayersIcon class="w-5 h-5 mr-3" />
+                        <span>{{ $t('nav.filaments') }}</span>
+                    </div>
+                    <span v-if="notifications.emptyFilaments > 0"
+                          class="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none"
+                          title="Filaments out of stock">
+                        {{ notifications.emptyFilaments }}
+                    </span>
                 </Link>
+
                 <Link :href="route('filaments.stock')" class="flex items-center px-3 py-2 rounded-md transition-colors" :class="route().current('filaments.stock') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
                     <PackagePlusIcon class="w-5 h-5 mr-3" />
                     <span>{{ $t('nav.filament_stock') || 'Filament Stock' }}</span>
                 </Link>
+
+                <!-- Printers with maintenance/nozzle badge -->
                 <Link :href="route('printers.index')" class="flex items-center justify-between px-3 py-2 rounded-md transition-colors" :class="route().current('printers.*') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
                     <div class="flex items-center">
                         <PrinterIcon class="w-5 h-5 mr-3" />
                         <span>{{ $t('nav.printers') }}</span>
                     </div>
-                    <div v-if="$page.props.auth.hasPrinterNotifications" class="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span v-if="notifications.printerWarnings > 0"
+                          class="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 leading-none animate-pulse"
+                          title="Printer warnings">
+                        {{ notifications.printerWarnings }}
+                    </span>
                 </Link>
+
                 <Link :href="route('calibrations.index')" class="flex items-center px-3 py-2 rounded-md transition-colors" :class="route().current('calibrations.*') ? 'bg-orange-500/10 text-orange-500' : 'hover:bg-slate-800 hover:text-white'">
                     <SlidersHorizontalIcon class="w-5 h-5 mr-3" />
                     <span>{{ $t('nav.calibrations') }}</span>
@@ -133,8 +159,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import { Toaster } from 'vue-sonner';
 import { 
@@ -145,7 +171,15 @@ import {
 } from 'lucide-vue-next';
 
 const { locale } = useI18n();
+const page = usePage();
 const isSidebarOpen = ref(false);
+
+const notifications = computed(() => page.props.notifications || {
+    activeOrders: 0,
+    emptyFilaments: 0,
+    printerWarnings: 0,
+    total: 0,
+});
 
 const toggleLocale = () => {
     const newLocale = locale.value === 'en' ? 'sr' : 'en';

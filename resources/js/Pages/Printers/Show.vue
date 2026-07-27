@@ -19,6 +19,17 @@
     </PageHeader>
     
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <!-- Monthly Hours Bar Chart -->
+      <Card class="p-6 lg:col-span-2" v-if="printer.maintenances && printer.maintenances.length > 1">
+        <h3 class="text-base font-semibold mb-4 flex items-center gap-2">
+          <BarChart2Icon class="w-4 h-4 text-indigo-500" />
+          {{ $t('printers.monthly_hours') || 'Monthly Print Hours' }}
+        </h3>
+        <div class="h-48">
+          <Bar :data="hoursChartData" :options="hoursChartOptions" />
+        </div>
+      </Card>
+
       <!-- Maintenance History -->
       <Card class="p-0 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
@@ -142,14 +153,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import PageHeader from '@/Components/PageHeader.vue'
 import { Card } from '@/Components/ui/card'
 import { Button } from '@/Components/ui/button'
 import { Badge } from '@/Components/ui/badge'
-import { WrenchIcon, RotateCcwIcon, PencilIcon, TrashIcon } from 'lucide-vue-next'
+import { WrenchIcon, RotateCcwIcon, PencilIcon, TrashIcon, BarChart2Icon } from 'lucide-vue-next'
 import Modal from '@/Components/Modal.vue'
 import TextInput from '@/Components/TextInput.vue'
 import InputLabel from '@/Components/InputLabel.vue'
@@ -157,6 +168,10 @@ import Checkbox from '@/Components/Checkbox.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
+import { Bar } from 'vue-chartjs'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const props = defineProps({
     printer: {
@@ -170,6 +185,32 @@ const isDeleteDialogOpen = ref(false)
 const isDeleting = ref(false)
 const maintenanceToEdit = ref(null)
 const maintenanceToDelete = ref(null)
+
+// ── Monthly Hours Bar Chart ───────────────────────────────────────────────────
+const hoursChartData = computed(() => {
+    const sorted = [...(props.printer.maintenances || [])].sort(
+        (a, b) => new Date(a.maintenance_month) - new Date(b.maintenance_month)
+    )
+    return {
+        labels: sorted.map(m => new Date(m.maintenance_month).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })),
+        datasets: [{
+            label: 'Hours Printed',
+            data: sorted.map(m => m.hours_printed_this_month),
+            backgroundColor: 'rgba(249,115,22,0.75)',
+            borderRadius: 4,
+        }],
+    }
+})
+
+const hoursChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+        y: { grid: { color: 'rgba(148,163,184,0.1)' }, ticks: { font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+    },
+}
 
 const editForm = useForm({
   maintenance_month: '',

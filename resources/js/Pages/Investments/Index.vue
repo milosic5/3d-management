@@ -6,6 +6,9 @@
     
     <PageHeader :title="$t('investments.title')" :description="$t('investments.manage_expenses_desc', 'Track hardware investments, packaging, and business expenses.')">
       <template #actions>
+        <a :href="route('export.investments.excel')" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors mr-2">
+            <DownloadIcon class="w-4 h-4 mr-1.5 text-green-600" /> Excel
+        </a>
         <Link :href="route('investments.categories.index')">
             <Button variant="outline" class="mr-2"><SettingsIcon class="w-4 h-4 mr-2" /> {{ $t('investments.categories') }}</Button>
         </Link>
@@ -59,7 +62,7 @@ import DataTable from '@/Components/DataTable.vue'
 import { Card } from '@/Components/ui/card'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import { Button } from '@/Components/ui/button'
-import { PlusIcon, SettingsIcon, TrashIcon, PencilIcon } from 'lucide-vue-next'
+import { PlusIcon, SettingsIcon, TrashIcon, PencilIcon, DownloadIcon } from 'lucide-vue-next'
 import { useFilters } from '@/composables/useFilters'
 
 import { useI18n } from 'vue-i18n'

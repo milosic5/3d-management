@@ -63,6 +63,14 @@
             </Card>
         </div>
 
+        <!-- Revenue vs Costs Line Chart (only shown if data exists) -->
+        <Card class="p-6 mb-6" v-if="stats.revenueVsCosts && stats.revenueVsCosts.length">
+            <h3 class="font-semibold text-lg mb-4">Revenue vs Costs (Monthly)</h3>
+            <div class="h-56">
+                <Line :data="lineChartData" :options="lineOptions" />
+            </div>
+        </Card>
+
         <!-- Operational Stats -->
         <h3 class="font-semibold text-lg mb-4 mt-8">{{ $t('dashboard.operations') }}</h3>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
@@ -127,10 +135,10 @@ import PageHeader from '@/Components/PageHeader.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Card } from '@/Components/ui/card';
 import { DollarSignIcon, TrendingDownIcon, WalletIcon, PercentIcon, BoxIcon, TicketIcon } from 'lucide-vue-next';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'vue-chartjs';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Filler } from 'chart.js';
+import { Doughnut, Line } from 'vue-chartjs';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement, Filler);
 
 const props = defineProps({
     stats: { type: Object, required: true },
@@ -226,5 +234,39 @@ const donutOptions = {
     plugins: {
         legend: { position: 'right' }
     }
+};
+
+// Revenue vs Costs Line Chart
+const lineChartData = computed(() => {
+    const data = props.stats.revenueVsCosts || [];
+    return {
+        labels: data.map(d => d.month),
+        datasets: [
+            {
+                label: 'Revenue',
+                data: data.map(d => d.revenue),
+                borderColor: '#f97316',
+                backgroundColor: 'rgba(249,115,22,0.08)',
+                tension: 0.4, fill: true, pointRadius: 4,
+            },
+            {
+                label: 'Costs',
+                data: data.map(d => d.costs),
+                borderColor: '#64748b',
+                backgroundColor: 'rgba(100,116,139,0.08)',
+                tension: 0.4, fill: true, pointRadius: 4,
+            },
+        ],
+    };
+});
+
+const lineOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+    scales: {
+        y: { grid: { color: 'rgba(148,163,184,0.1)' }, ticks: { font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+    },
 };
 </script>

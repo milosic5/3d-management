@@ -48,6 +48,13 @@ Route::middleware('auth')->group(function () {
     Route::post('packagings/{packaging}/add-stock', [\App\Http\Controllers\PackagingController::class, 'addStock'])->name('packagings.add-stock');
     Route::post('packagings/{packaging}/remove-stock', [\App\Http\Controllers\PackagingController::class, 'removeStock'])->name('packagings.remove-stock');
     Route::resource('packagings', \App\Http\Controllers\PackagingController::class)->except(['create', 'edit', 'show']);
+
+    // Export routes
+    Route::get('/export/orders/excel', [\App\Http\Controllers\ExportController::class, 'ordersExcel'])->name('export.orders.excel');
+    Route::get('/export/orders/{order}/pdf', [\App\Http\Controllers\ExportController::class, 'orderPdf'])->name('export.order.pdf');
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/export/investments/excel', [\App\Http\Controllers\ExportController::class, 'investmentsExcel'])->name('export.investments.excel');
+    });
     // Profile (default breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

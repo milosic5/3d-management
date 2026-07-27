@@ -4,6 +4,9 @@
     
     <PageHeader :title="$t('orders.title')" description="">
       <template #actions>
+        <a :href="route('export.orders.excel')" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors mr-2">
+            <DownloadIcon class="w-4 h-4 mr-1.5 text-green-600" /> Excel
+        </a>
         <Link :href="route('orders.create')">
             <Button class="bg-orange-500 hover:bg-orange-600 text-white"><PlusIcon class="w-4 h-4 mr-2" /> {{ $t('orders.new') }}</Button>
         </Link>
@@ -44,7 +47,7 @@ import DataTable from '@/Components/DataTable.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import { Button } from '@/Components/ui/button'
-import { PlusIcon, EyeIcon, PencilIcon, TrashIcon } from 'lucide-vue-next'
+import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, DownloadIcon } from 'lucide-vue-next'
 import { useFilters } from '@/composables/useFilters'
 import { useI18n } from 'vue-i18n'
 
@@ -148,9 +151,10 @@ const columns = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => h('div', { class: 'flex items-center space-x-2' }, [
+    cell: ({ row }) => h('div', { class: 'flex items-center space-x-1' }, [
         h(Link, { href: route('orders.show', row.original.id) }, () => h(Button, { variant: 'ghost', size: 'icon' }, () => h(EyeIcon, { class: 'w-4 h-4' }))),
         h(Link, { href: route('orders.edit', row.original.id) }, () => h(Button, { variant: 'ghost', size: 'icon' }, () => h(PencilIcon, { class: 'w-4 h-4 text-slate-500' }))),
+        h('a', { href: route('export.order.pdf', row.original.id), title: 'Download PDF', class: 'inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors' }, h(DownloadIcon, { class: 'w-4 h-4 text-slate-400 hover:text-red-500' })),
         h(Button, { variant: 'ghost', size: 'icon', onClick: () => confirmDelete(row.original) }, () => h(TrashIcon, { class: 'w-4 h-4 text-red-500' }))
     ])
   }

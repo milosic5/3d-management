@@ -52,8 +52,31 @@ class DashboardService
 
     public function getRevenueVsCostsByMonth($period)
     {
-        // For MVP, returning mocked data format. In real scenario group by YEAR/MONTH.
-        return [];
+        [$start, $end] = $this->getDateRange($period);
+
+        $revenue = DB::table('orders')
+            ->select(DB::raw("strftime('%Y-%m', created_at) as month"), DB::raw('SUM(total_price) as revenue'))
+            ->where('status', 'delivered')
+            ->whereBetween('created_at', [$start, $end])
+            ->groupByRaw("strftime('%Y-%m', created_at)")
+            ->orderBy('month')
+            ->get()->keyBy('month');
+
+        $costs = DB::table('investments')
+            ->select(DB::raw("strftime('%Y-%m', invested_at) as month"), DB::raw('SUM(amount) as costs'))
+            ->whereBetween('invested_at', [$start, $end])
+            ->groupByRaw("strftime('%Y-%m', invested_at)")
+            ->orderBy('month')
+            ->get()->keyBy('month');
+
+        $months = collect($revenue->keys())->merge($costs->keys())->unique()->sort()->values();
+
+        return $months->map(fn($m) => [
+            'month'   => $m,
+            'revenue' => (float) ($revenue[$m]->revenue ?? 0),
+            'costs'   => (float) ($costs[$m]->costs   ?? 0),
+            'profit'  => (float) ($revenue[$m]->revenue ?? 0) - (float) ($costs[$m]->costs ?? 0),
+        ])->values()->toArray();
     }
 
     public function getCostsByCategory($period)
@@ -85,7 +108,20 @@ class DashboardService
 
     public function getProfitabilityTimeline($period)
     {
-        return [];
+        [$start, $end] = $this->getDateRange($period);
+
+        return DB::table('orders')
+            ->select(
+                DB::raw("strftime('%Y-%m', created_at) as month"),
+                DB::raw('SUM(total_price) as revenue'),
+                DB::raw('COUNT(*) as orders')
+            )
+            ->where('status', 'delivered')
+            ->whereBetween('created_at', [$start, $end])
+            ->groupByRaw("strftime('%Y-%m', created_at)")
+            ->orderBy('month')
+            ->get()
+            ->toArray();
     }
 
     public function getOperationalStats()
