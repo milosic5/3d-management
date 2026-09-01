@@ -59,7 +59,7 @@ class OrderController extends Controller
     public function create()
     {
         return Inertia::render('Orders/Create', [
-            'products' => Product::where('is_active', true)->select('id', 'name', 'color_hex', 'price', 'print_time_minutes', 'weight_grams')->get(),
+            'products' => Product::where('is_active', true)->select('id', 'name', 'color_hex', 'price', 'print_time_minutes', 'weight_grams')->latest()->get(),
             'filaments' => Filament::select('id', 'brand', 'name', 'color_name', 'color_hex', 'price_per_kg')->get()
         ]);
     }
@@ -115,7 +115,7 @@ class OrderController extends Controller
 
         return Inertia::render('Orders/Edit', [
             'order'     => $order->load('items'),
-            'products'  => Product::where('is_active', true)->select('id', 'name', 'color_hex', 'price', 'print_time_minutes', 'weight_grams')->get(),
+            'products'  => Product::where('is_active', true)->select('id', 'name', 'color_hex', 'price', 'print_time_minutes', 'weight_grams')->latest()->get(),
             'filaments' => Filament::select('id', 'brand', 'name', 'color_name', 'color_hex', 'price_per_kg')->get()
         ]);
     }
