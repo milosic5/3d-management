@@ -357,7 +357,7 @@ const columns = computed(() => {
           const r = row.original
           const fmt = (val) => Number(val)
           if (r.type === 'box') {
-              return `${fmt(r.length)} x ${fmt(r.width)} x ${fmt(r.height)} mm`
+              return `${fmt(r.length)} x ${fmt(r.width)} x ${fmt(r.height)} cm`
           }
           return `${fmt(r.length)} x ${fmt(r.width)} mm`
       }
