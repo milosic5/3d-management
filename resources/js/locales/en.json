@@ -332,7 +332,7 @@
     "edit": "Edit",
     "type": "Type",
     "name": "Name",
-    "dimensions": "Dimensions (cm)",
+    "dimensions": "Dimensions (mm)",
     "length": "Length (a)",
     "width": "Width (b)",
     "height": "Height (c)",

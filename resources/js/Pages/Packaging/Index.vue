@@ -23,7 +23,7 @@
         </nav>
     </div>
 
-    <DataTable :data="filteredData" :columns="columns" :page-size="15" searchable :search-placeholder="$t('packagings.search_placeholder')" v-model="searchQuery">
+    <DataTable :data="filteredData" :columns="columns" :page-size="15" searchable :search-placeholder="$t('packagings.search_placeholder')" v-model="searchQuery" :rowClass="getRowClass" :initial-sorting="[{ id: 'dimensions', desc: false }]">
         <template #actions>
             <Button v-if="foundBoxId" variant="outline" size="sm" @click="foundBoxId = null" class="text-slate-500">
                 Prikaži sve kutije
@@ -337,19 +337,29 @@ const removeStock = (item) => {
     })
 }
 
+const getRowClass = (row) => {
+    return row.stock < 2 ? 'bg-red-50 dark:bg-red-900/20' : ''
+}
+
 const columns = computed(() => {
   return [
     { header: t('packagings.name'), accessorKey: 'name', cell: ({ row }) => h('span', { class: 'font-semibold' }, row.original.name || '-') },
     {
       header: t('packagings.dimensions'),
       id: 'dimensions',
+      accessorFn: (row) => {
+          if (row.type === 'box') {
+              return Number(row.length) * Number(row.width) * Number(row.height)
+          }
+          return Number(row.length) * Number(row.width)
+      },
       cell: ({ row }) => {
           const r = row.original
           const fmt = (val) => Number(val)
           if (r.type === 'box') {
-              return `${fmt(r.length)} x ${fmt(r.width)} x ${fmt(r.height)} cm`
+              return `${fmt(r.length)} x ${fmt(r.width)} x ${fmt(r.height)} mm`
           }
-          return `${fmt(r.length)} x ${fmt(r.width)} cm`
+          return `${fmt(r.length)} x ${fmt(r.width)} mm`
       }
     },
     {

@@ -333,7 +333,7 @@
     "edit": "Izmeni",
     "type": "Tip",
     "name": "Naziv",
-    "dimensions": "Dimenzije (cm)",
+    "dimensions": "Dimenzije (mm)",
     "length": "Dužina (a)",
     "width": "Širina (b)",
     "height": "Visina (c)",

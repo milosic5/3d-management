@@ -54,7 +54,8 @@
             :key="row.id" 
             :class="[
               'hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors',
-              rowClickable ? 'cursor-pointer select-none' : ''
+              rowClickable ? 'cursor-pointer select-none' : '',
+              rowClass ? rowClass(row.original) : ''
             ]"
             @click="rowClickable && $emit('row-click', row.original)"
           >
@@ -131,12 +132,14 @@ const props = defineProps({
   columnVisibility: { type: Object, default: () => ({}) },
   pagination: { type: Object, default: null },
   serverSort: { type: Object, default: null },
-  rowClickable: { type: Boolean, default: false }
+  rowClickable: { type: Boolean, default: false },
+  rowClass: { type: Function, default: null },
+  initialSorting: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['update:modelValue', 'update:columnVisibility', 'sort', 'row-click'])
 
-const sorting = ref([])
+const sorting = ref([...props.initialSorting])
 
 // Server-sort state (visual indicators when using server-side pagination)
 const serverSortKey = ref(props.serverSort?.key ?? '')
