@@ -6,6 +6,7 @@
       <template #actions>
         <div class="flex space-x-2">
             <Button class="bg-indigo-500 hover:bg-indigo-600 text-white" @click="openFindBoxModal"><SearchIcon class="w-4 h-4 mr-2" /> {{ $t('packagings.find_box') }}</Button>
+            <Button class="bg-teal-500 hover:bg-teal-600 text-white" @click="openOptimalBoxModal"><PackageIcon class="w-4 h-4 mr-2" /> Kalkulator kutije</Button>
             <Button class="bg-orange-500 hover:bg-orange-600 text-white" @click="openModal('box')"><PlusIcon class="w-4 h-4 mr-2" /> {{ $t('packagings.new_box') }}</Button>
             <Button class="bg-blue-500 hover:bg-blue-600 text-white" @click="openModal('envelope')"><PlusIcon class="w-4 h-4 mr-2" /> {{ $t('packagings.new_envelope') }}</Button>
         </div>
@@ -123,6 +124,55 @@
             </form>
         </div>
     </Modal>
+    <Modal :show="isOptimalBoxModalOpen" @close="closeOptimalBoxModal" maxWidth="md">
+        <div class="p-6">
+            <h2 class="text-lg font-medium text-slate-900 mb-4">
+                Kalkulator optimalne kutije
+            </h2>
+            <p class="text-sm text-slate-500 mb-4">Unesite broj predmeta i njihove dimenzije da biste pronašli najmanju kutiju u koju staju.</p>
+            
+            <form @submit.prevent="findOptimalBox">
+                <div class="mb-4">
+                    <InputLabel value="Broj predmeta" />
+                    <TextInput v-model="optimalBoxForm.quantity" type="number" min="1" class="mt-1 block w-full" required />
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <InputLabel :value="$t('packagings.length')" />
+                        <TextInput v-model="optimalBoxForm.length" type="number" step="0.1" class="mt-1 block w-full" required />
+                    </div>
+                    <div>
+                        <InputLabel :value="$t('packagings.width')" />
+                        <TextInput v-model="optimalBoxForm.width" type="number" step="0.1" class="mt-1 block w-full" required />
+                    </div>
+                    <div>
+                        <InputLabel :value="$t('packagings.height')" />
+                        <TextInput v-model="optimalBoxForm.height" type="number" step="0.1" class="mt-1 block w-full" required />
+                    </div>
+                </div>
+
+                <div class="mb-4 flex items-center">
+                    <input id="regularStacking" type="checkbox" v-model="optimalBoxForm.regularStacking" class="rounded border-slate-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
+                    <label for="regularStacking" class="ml-2 text-sm text-slate-600">Pravilno slaganje predmeta</label>
+                </div>
+
+                <div v-if="optimalBoxResult" class="mb-4 p-4 rounded-md" :class="optimalBoxResult.success ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
+                    <p class="text-sm font-medium">{{ optimalBoxResult.message }}</p>
+                    <p v-if="optimalBoxResult.success && optimalBoxResult.utilization" class="text-xs mt-1">
+                        Iskorišćenost prostora: {{ optimalBoxResult.utilization }}%
+                    </p>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <SecondaryButton type="button" @click="closeOptimalBoxModal">{{ $t('common.cancel') }}</SecondaryButton>
+                    <PrimaryButton>
+                        Izračunaj
+                    </PrimaryButton>
+                </div>
+            </form>
+        </div>
+    </Modal>
   </AppLayout>
 </template>
 
@@ -140,7 +190,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import { Button } from '@/Components/ui/button'
-import { PlusIcon, PencilIcon, TrashIcon, MinusIcon, SearchIcon } from 'lucide-vue-next'
+import { PlusIcon, PencilIcon, TrashIcon, MinusIcon, SearchIcon, PackageIcon } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 
@@ -186,6 +236,16 @@ const findBoxForm = useForm({
     length: '',
     width: '',
     height: ''
+})
+
+const isOptimalBoxModalOpen = ref(false)
+const optimalBoxResult = ref(null)
+const optimalBoxForm = useForm({
+    quantity: 1,
+    length: '',
+    width: '',
+    height: '',
+    regularStacking: false
 })
 
 const form = useForm({
@@ -286,6 +346,107 @@ const findSuitableBox = () => {
         foundBoxResult.value = {
             success: false,
             message: t('packagings.no_box_found')
+        }
+    }
+}
+
+const openOptimalBoxModal = () => {
+    optimalBoxForm.reset()
+    optimalBoxResult.value = null
+    isOptimalBoxModalOpen.value = true
+}
+
+const closeOptimalBoxModal = () => {
+    isOptimalBoxModalOpen.value = false
+    optimalBoxForm.reset()
+    optimalBoxResult.value = null
+}
+
+const findOptimalBox = () => {
+    optimalBoxResult.value = null
+    
+    const qty = Number(optimalBoxForm.quantity)
+    const itemL = Number(optimalBoxForm.length)
+    const itemW = Number(optimalBoxForm.width)
+    const itemH = Number(optimalBoxForm.height)
+    
+    if (!qty || !itemL || !itemW || !itemH) return
+    
+    const itemVolume = itemL * itemW * itemH
+    const totalItemsVolume = itemVolume * qty
+    
+    const boxes = props.packagings.filter(p => p.type === 'box')
+    
+    let bestBox = null
+    let minVolume = Infinity
+    let maxUtilization = 0
+    
+    const itemDims = [itemL, itemW, itemH].sort((a, b) => a - b)
+    
+    for (const box of boxes) {
+        const boxDims = [Number(box.length), Number(box.width), Number(box.height)].sort((a, b) => a - b)
+        
+        if (itemDims[0] > boxDims[0] || itemDims[1] > boxDims[1] || itemDims[2] > boxDims[2]) {
+            continue
+        }
+        
+        const boxVolume = Number(box.length) * Number(box.width) * Number(box.height)
+        let fits = false
+        
+        if (optimalBoxForm.regularStacking) {
+            const orientations = [
+                [itemL, itemW, itemH],
+                [itemL, itemH, itemW],
+                [itemW, itemL, itemH],
+                [itemW, itemH, itemL],
+                [itemH, itemL, itemW],
+                [itemH, itemW, itemL]
+            ]
+            
+            let maxFitted = 0
+            for (const [dx, dy, dz] of orientations) {
+                const count = Math.floor(Number(box.length) / dx) * 
+                              Math.floor(Number(box.width) / dy) * 
+                              Math.floor(Number(box.height) / dz)
+                if (count > maxFitted) maxFitted = count
+            }
+            
+            if (maxFitted >= qty) {
+                fits = true
+            }
+        } else {
+            const packingEfficiency = 0.60
+            const requiredVolume = totalItemsVolume / packingEfficiency
+            
+            if (boxVolume >= requiredVolume) {
+                fits = true
+            }
+        }
+        
+        if (fits) {
+            if (boxVolume < minVolume) {
+                minVolume = boxVolume
+                bestBox = box
+                maxUtilization = (totalItemsVolume / boxVolume) * 100
+            }
+        }
+    }
+    
+    if (bestBox) {
+        optimalBoxResult.value = {
+            success: true,
+            message: `Pronađena kutija: ${bestBox.name || ('#' + bestBox.id)} (${bestBox.length}x${bestBox.width}x${bestBox.height} cm)`,
+            utilization: maxUtilization.toFixed(1)
+        }
+        
+        activeTab.value = 'box'
+        searchQuery.value = ''
+        foundBoxId.value = bestBox.id
+        
+    } else {
+        optimalBoxResult.value = {
+            success: false,
+            message: 'Nije pronađena odgovarajuća kutija za unetu količinu.'
         }
     }
 }
