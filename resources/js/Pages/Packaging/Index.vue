@@ -133,22 +133,38 @@
             
             <form @submit.prevent="findOptimalBox">
                 <div class="mb-4">
-                    <InputLabel value="Broj predmeta" />
-                    <TextInput v-model="optimalBoxForm.quantity" type="number" min="1" class="mt-1 block w-full" required />
-                </div>
-                
-                <div class="grid grid-cols-3 gap-4 mb-4">
-                    <div>
-                        <InputLabel :value="$t('packagings.length')" />
-                        <TextInput v-model="optimalBoxForm.length" type="number" step="0.1" class="mt-1 block w-full" required />
+                    <div class="flex justify-between items-center mb-2">
+                        <InputLabel value="Predmeti za pakovanje" />
+                        <Button type="button" variant="outline" size="sm" @click="addOptimalBoxItem">
+                            <PlusIcon class="w-3 h-3 mr-1" /> Dodaj
+                        </Button>
                     </div>
-                    <div>
-                        <InputLabel :value="$t('packagings.width')" />
-                        <TextInput v-model="optimalBoxForm.width" type="number" step="0.1" class="mt-1 block w-full" required />
-                    </div>
-                    <div>
-                        <InputLabel :value="$t('packagings.height')" />
-                        <TextInput v-model="optimalBoxForm.height" type="number" step="0.1" class="mt-1 block w-full" required />
+                    
+                    <div v-for="(item, index) in optimalBoxForm.items" :key="index" class="p-3 bg-slate-50 border border-slate-200 rounded-md mb-2 relative">
+                        <button v-if="optimalBoxForm.items.length > 1" type="button" @click="removeOptimalBoxItem(index)" class="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                            <TrashIcon class="w-4 h-4" />
+                        </button>
+                        
+                        <div class="grid grid-cols-4 gap-3">
+                            <div class="col-span-4 sm:col-span-1">
+                                <InputLabel value="Kom." class="text-xs" />
+                                <TextInput v-model="item.quantity" type="number" min="1" class="mt-1 block w-full text-sm" required />
+                            </div>
+                            <div class="col-span-4 sm:col-span-3 grid grid-cols-3 gap-2">
+                                <div>
+                                    <InputLabel :value="$t('packagings.length')" class="text-xs" />
+                                    <TextInput v-model="item.length" type="number" step="0.1" class="mt-1 block w-full text-sm" required />
+                                </div>
+                                <div>
+                                    <InputLabel :value="$t('packagings.width')" class="text-xs" />
+                                    <TextInput v-model="item.width" type="number" step="0.1" class="mt-1 block w-full text-sm" required />
+                                </div>
+                                <div>
+                                    <InputLabel :value="$t('packagings.height')" class="text-xs" />
+                                    <TextInput v-model="item.height" type="number" step="0.1" class="mt-1 block w-full text-sm" required />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -241,10 +257,9 @@ const findBoxForm = useForm({
 const isOptimalBoxModalOpen = ref(false)
 const optimalBoxResult = ref(null)
 const optimalBoxForm = useForm({
-    quantity: 1,
-    length: '',
-    width: '',
-    height: '',
+    items: [
+        { quantity: 1, length: '', width: '', height: '' }
+    ],
     regularStacking: false
 })
 
@@ -362,18 +377,36 @@ const closeOptimalBoxModal = () => {
     optimalBoxResult.value = null
 }
 
+const addOptimalBoxItem = () => {
+    optimalBoxForm.items.push({ quantity: 1, length: '', width: '', height: '' })
+}
+
+const removeOptimalBoxItem = (index) => {
+    optimalBoxForm.items.splice(index, 1)
+}
+
 const findOptimalBox = () => {
     optimalBoxResult.value = null
     
-    const qty = Number(optimalBoxForm.quantity)
-    const itemL = Number(optimalBoxForm.length)
-    const itemW = Number(optimalBoxForm.width)
-    const itemH = Number(optimalBoxForm.height)
+    const parsedItems = optimalBoxForm.items.map(item => ({
+        qty: Number(item.quantity),
+        L: Number(item.length),
+        W: Number(item.width),
+        H: Number(item.height)
+    })).filter(i => i.qty > 0 && i.L > 0 && i.W > 0 && i.H > 0)
     
-    if (!qty || !itemL || !itemW || !itemH) return
+    if (parsedItems.length === 0) return
     
-    const itemVolume = itemL * itemW * itemH
-    const totalItemsVolume = itemVolume * qty
+    let totalItemsVolume = 0
+    let maxItemDims = [0, 0, 0]
+    
+    for (const item of parsedItems) {
+        totalItemsVolume += (item.L * item.W * item.H) * item.qty
+        const dims = [item.L, item.W, item.H].sort((a, b) => a - b)
+        maxItemDims[0] = Math.max(maxItemDims[0], dims[0])
+        maxItemDims[1] = Math.max(maxItemDims[1], dims[1])
+        maxItemDims[2] = Math.max(maxItemDims[2], dims[2])
+    }
     
     const boxes = props.packagings.filter(p => p.type === 'box')
     
@@ -381,12 +414,10 @@ const findOptimalBox = () => {
     let minVolume = Infinity
     let maxUtilization = 0
     
-    const itemDims = [itemL, itemW, itemH].sort((a, b) => a - b)
-    
     for (const box of boxes) {
         const boxDims = [Number(box.length), Number(box.width), Number(box.height)].sort((a, b) => a - b)
         
-        if (itemDims[0] > boxDims[0] || itemDims[1] > boxDims[1] || itemDims[2] > boxDims[2]) {
+        if (maxItemDims[0] > boxDims[0] || maxItemDims[1] > boxDims[1] || maxItemDims[2] > boxDims[2]) {
             continue
         }
         
@@ -394,25 +425,28 @@ const findOptimalBox = () => {
         let fits = false
         
         if (optimalBoxForm.regularStacking) {
-            const orientations = [
-                [itemL, itemW, itemH],
-                [itemL, itemH, itemW],
-                [itemW, itemL, itemH],
-                [itemW, itemH, itemL],
-                [itemH, itemL, itemW],
-                [itemH, itemW, itemL]
-            ]
-            
-            let maxFitted = 0
-            for (const [dx, dy, dz] of orientations) {
-                const count = Math.floor(Number(box.length) / dx) * 
-                              Math.floor(Number(box.width) / dy) * 
-                              Math.floor(Number(box.height) / dz)
-                if (count > maxFitted) maxFitted = count
-            }
-            
-            if (maxFitted >= qty) {
-                fits = true
+            if (parsedItems.length === 1) {
+                const item = parsedItems[0]
+                const qty = item.qty
+                const orientations = [
+                    [item.L, item.W, item.H], [item.L, item.H, item.W],
+                    [item.W, item.L, item.H], [item.W, item.H, item.L],
+                    [item.H, item.L, item.W], [item.H, item.W, item.L]
+                ]
+                
+                let maxFitted = 0
+                for (const [dx, dy, dz] of orientations) {
+                    const count = Math.floor(Number(box.length) / dx) * 
+                                  Math.floor(Number(box.width) / dy) * 
+                                  Math.floor(Number(box.height) / dz)
+                    if (count > maxFitted) maxFitted = count
+                }
+                
+                if (maxFitted >= qty) fits = true
+            } else {
+                const packingEfficiency = 0.85
+                const requiredVolume = totalItemsVolume / packingEfficiency
+                if (boxVolume >= requiredVolume) fits = true
             }
         } else {
             const packingEfficiency = 0.60
