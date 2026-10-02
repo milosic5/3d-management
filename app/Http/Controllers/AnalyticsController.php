@@ -113,7 +113,7 @@ class AnalyticsController extends Controller
             ->select(
                 'products.material',
                 DB::raw('SUM(order_items.unit_price * order_items.quantity) as revenue'),
-                DB::raw('SUM(order_items.weight_grams * order_items.quantity) as total_grams'),
+                DB::raw('SUM(order_items.weight_grams) as total_grams'),
                 DB::raw('COUNT(DISTINCT orders.id) as order_count')
             )
             ->where('orders.status', 'delivered')
@@ -139,14 +139,14 @@ class AnalyticsController extends Controller
                 'products.color_hex',
                 DB::raw('SUM(order_items.quantity) as units_sold'),
                 DB::raw('SUM(order_items.unit_price * order_items.quantity) as revenue'),
-                DB::raw('SUM(order_items.print_cost * order_items.quantity) as print_costs'),
+                DB::raw('SUM(order_items.print_cost) as print_costs'),
                 DB::raw('SUM(
                     CASE WHEN filaments.price_per_kg IS NOT NULL
-                    THEN (order_items.weight_grams / 1000.0) * filaments.price_per_kg * order_items.quantity
+                    THEN (order_items.weight_grams / 1000.0) * filaments.price_per_kg
                     ELSE 0 END
                 ) as filament_cost'),
-                DB::raw('SUM(order_items.weight_grams * order_items.quantity) as total_grams'),
-                DB::raw('SUM(order_items.print_time_minutes * order_items.quantity) as total_minutes')
+                DB::raw('SUM(order_items.weight_grams) as total_grams'),
+                DB::raw('SUM(order_items.print_time_minutes) as total_minutes')
             )
             ->where('orders.status', 'delivered')
             ->whereBetween('orders.created_at', [$start, $end])
