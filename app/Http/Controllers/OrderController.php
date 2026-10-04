@@ -56,11 +56,17 @@ class OrderController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $duplicateOrder = null;
+        if ($duplicateId = $request->input('duplicate_from')) {
+            $duplicateOrder = Order::with('items')->find($duplicateId);
+        }
+
         return Inertia::render('Orders/Create', [
             'products' => Product::where('is_active', true)->select('id', 'name', 'color_hex', 'price', 'print_time_minutes', 'weight_grams')->latest()->get(),
-            'filaments' => Filament::select('id', 'brand', 'name', 'color_name', 'color_hex', 'price_per_kg')->get()
+            'filaments' => Filament::select('id', 'brand', 'name', 'color_name', 'color_hex', 'price_per_kg')->get(),
+            'duplicateOrder' => $duplicateOrder,
         ]);
     }
 

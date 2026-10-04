@@ -47,7 +47,7 @@ import DataTable from '@/Components/DataTable.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import { Button } from '@/Components/ui/button'
-import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, DownloadIcon } from 'lucide-vue-next'
+import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, DownloadIcon, CopyIcon } from 'lucide-vue-next'
 import { useFilters } from '@/composables/useFilters'
 import { useI18n } from 'vue-i18n'
 
@@ -154,6 +154,7 @@ const columns = [
     cell: ({ row }) => h('div', { class: 'flex items-center space-x-1' }, [
         h(Link, { href: route('orders.show', row.original.id) }, () => h(Button, { variant: 'ghost', size: 'icon' }, () => h(EyeIcon, { class: 'w-4 h-4' }))),
         h(Link, { href: route('orders.edit', row.original.id) }, () => h(Button, { variant: 'ghost', size: 'icon' }, () => h(PencilIcon, { class: 'w-4 h-4 text-slate-500' }))),
+        h(Link, { href: route('orders.create', { duplicate_from: row.original.id }), title: 'Duplicate' }, () => h(Button, { variant: 'ghost', size: 'icon' }, () => h(CopyIcon, { class: 'w-4 h-4 text-slate-500' }))),
         h('a', { href: route('export.order.pdf', row.original.id), title: 'Download PDF', class: 'inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors' }, h(DownloadIcon, { class: 'w-4 h-4 text-slate-400 hover:text-red-500' })),
         h(Button, { variant: 'ghost', size: 'icon', onClick: () => confirmDelete(row.original) }, () => h(TrashIcon, { class: 'w-4 h-4 text-red-500' }))
     ])

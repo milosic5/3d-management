@@ -168,7 +168,7 @@ import { Textarea } from '@/Components/ui/textarea'
 import { PlusIcon, TrashIcon } from 'lucide-vue-next'
 import SearchableSelect from '@/Components/SearchableSelect.vue'
 
-const props = defineProps({ products: Array, filaments: Array })
+const props = defineProps({ products: Array, filaments: Array, duplicateOrder: Object })
 const { t } = useI18n()
 
 const productOptions = computed(() => {
@@ -191,12 +191,24 @@ const getLocalISOString = () => {
 }
 
 const form = useForm({
-    customer_name: 'KP',
+    customer_name: props.duplicateOrder ? props.duplicateOrder.customer_name : 'KP',
     created_at: getLocalISOString(),
-    notes: '',
+    notes: props.duplicateOrder ? props.duplicateOrder.notes : '',
     status: 'received',
-    estimated_print_minutes: null,
-    items: [
+    estimated_print_minutes: props.duplicateOrder ? props.duplicateOrder.estimated_print_minutes : null,
+    items: props.duplicateOrder && props.duplicateOrder.items && props.duplicateOrder.items.length > 0 ? props.duplicateOrder.items.map(i => ({
+        product_id: i.product_id,
+        filament_id: i.filament_id || '',
+        quantity: i.quantity,
+        unit_price: i.unit_price,
+        print_cost: i.print_cost || 0,
+        print_time_minutes: i.print_time_minutes,
+        weight_grams: i.weight_grams,
+        color_name: i.color_name || '',
+        color_hex: i.color_hex || '',
+        notes: i.notes || '',
+        _base_unit_cost: i.quantity ? ((i.print_cost || 0) / i.quantity) : 0
+    })) : [
         { product_id: '', filament_id: '', quantity: 1, unit_price: 0, print_cost: 0, print_time_minutes: 0, weight_grams: 0, color_name: '', color_hex: '', notes: '', _base_unit_cost: 0 }
     ]
 })

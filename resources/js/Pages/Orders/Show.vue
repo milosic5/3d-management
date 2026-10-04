@@ -24,6 +24,9 @@
                 <PencilIcon class="w-4 h-4 mr-1" /> {{ $t('common.edit') }}
             </Button>
         </Link>
+        <Link :href="route('orders.create', { duplicate_from: order.id })" class="ml-2 inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+            <CopyIcon class="w-4 h-4 mr-1.5" /> {{ $t('common.duplicate', 'Duplicate') }}
+        </Link>
         <a :href="route('export.order.pdf', order.id)" class="ml-2 inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors">
             <FileTextIcon class="w-4 h-4 mr-1.5" /> PDF
         </a>
@@ -167,7 +170,7 @@ import MaterialBadge from '@/Components/MaterialBadge.vue'
 import ColorSwatch from '@/Components/ColorSwatch.vue'
 import { Card } from '@/Components/ui/card'
 import { Button } from '@/Components/ui/button'
-import { BoxIcon, PencilIcon, ClockIcon, FileTextIcon } from 'lucide-vue-next'
+import { BoxIcon, PencilIcon, ClockIcon, FileTextIcon, CopyIcon } from 'lucide-vue-next'
 import { usePrintTime } from '@/composables/usePrintTime'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
