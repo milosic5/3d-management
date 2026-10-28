@@ -240,7 +240,14 @@
     "total_filament_used": "Total filament used:",
     "total_quote": "Total quote:",
     "filament_used": "Filament used",
-    "delete_confirm": "Are you sure you want to delete this order? This action cannot be undone."
+    "delete_confirm": "Are you sure you want to delete this order? This action cannot be undone.",
+    "all_products": "All products",
+    "filter_product": "Filter by product...",
+    "reset_filters": "Reset filters",
+    "period_all": "All",
+    "period_today": "Today",
+    "period_this_month": "This Month",
+    "period_last_30_days": "Last 30 Days"
   },
   "calibrations": {
     "title": "Calibration",

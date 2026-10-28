@@ -16,7 +16,7 @@ class ExportController extends Controller
      */
     public function ordersExcel(Request $request)
     {
-        $filters = $request->only(['status', 'from', 'to']);
+        $filters = $request->only(['status', 'from', 'to', 'period', 'product_id', 'show_cancelled']);
         $filename = 'orders_' . now()->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new OrdersExport($filters), $filename);

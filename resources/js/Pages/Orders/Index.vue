@@ -4,7 +4,7 @@
     
     <PageHeader :title="$t('orders.title')" description="">
       <template #actions>
-        <a :href="route('export.orders.excel')" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors mr-2">
+        <a :href="excelExportUrl" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors mr-2">
             <DownloadIcon class="w-4 h-4 mr-1.5 text-green-600" /> Excel
         </a>
         <Link :href="route('orders.create')">
@@ -15,17 +15,59 @@
     
     <DataTable :data="orders.data" :columns="columns" :page-size="15" searchable :search-placeholder="$t('orders.search_placeholder')" v-model="form.search" :pagination="orders" :server-sort="{ key: form.sort, dir: form.direction }" @sort="onSort">
         <template #filters>
-            <div class="flex items-center space-x-2 mr-4">
-                <input type="checkbox" id="show_cancelled" v-model="form.show_cancelled" class="rounded border-slate-300 text-orange-600 focus:ring-orange-500">
-                <label for="show_cancelled" class="text-sm text-slate-600 dark:text-slate-400">{{ $t('orders.show_cancelled') }}</label>
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Period filter pills -->
+                <div class="inline-flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-md text-xs">
+                    <button
+                        v-for="p in periodOptions"
+                        :key="p.value"
+                        type="button"
+                        @click="setPeriod(p.value)"
+                        class="px-2.5 py-1.5 font-medium rounded transition-colors whitespace-nowrap"
+                        :class="(form.period || '') === p.value ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'"
+                    >
+                        {{ p.label }}
+                    </button>
+                </div>
+
+                <!-- Product filter -->
+                <div class="w-56">
+                    <SearchableSelect
+                        v-model="form.product_id"
+                        :options="productOptions"
+                        :placeholder="$t('orders.filter_product')"
+                        :search-placeholder="$t('common.search')"
+                    />
+                </div>
+
+                <!-- Status filter -->
+                <select v-model="form.status" class="h-10 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
+                    <option value="">{{ $t('common.all_statuses') }}</option>
+                    <option value="received">{{ $t('status.received') }}</option>
+                    <option value="printing">{{ $t('status.printing') }}</option>
+                    <option value="finished">{{ $t('status.finished') }}</option>
+                    <option value="delivered">{{ $t('status.delivered') }}</option>
+                </select>
+
+                <!-- Show cancelled checkbox -->
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="show_cancelled" v-model="form.show_cancelled" class="rounded border-slate-300 text-orange-600 focus:ring-orange-500">
+                    <label for="show_cancelled" class="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">{{ $t('orders.show_cancelled') }}</label>
+                </div>
+
+                <!-- Reset filters button -->
+                <Button
+                    v-if="hasActiveFilters"
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    @click="resetFilters"
+                    class="h-9 px-2.5 text-xs text-slate-500 hover:text-red-600 dark:hover:text-red-400"
+                >
+                    <RotateCcwIcon class="w-3.5 h-3.5 mr-1.5" />
+                    {{ $t('orders.reset_filters') }}
+                </Button>
             </div>
-            <select v-model="form.status" class="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
-                <option value="">{{ $t('common.all_statuses') }}</option>
-                <option value="received">{{ $t('status.received') }}</option>
-                <option value="printing">{{ $t('status.printing') }}</option>
-                <option value="finished">{{ $t('status.finished') }}</option>
-                <option value="delivered">{{ $t('status.delivered') }}</option>
-            </select>
         </template>
     </DataTable>
 
@@ -39,21 +81,68 @@
 </template>
 
 <script setup>
-import { ref, h } from 'vue'
+import { ref, computed, h } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import PageHeader from '@/Components/PageHeader.vue'
 import DataTable from '@/Components/DataTable.vue'
 import StatusBadge from '@/Components/StatusBadge.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
+import SearchableSelect from '@/Components/SearchableSelect.vue'
 import { Button } from '@/Components/ui/button'
-import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, DownloadIcon, CopyIcon } from 'lucide-vue-next'
+import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, DownloadIcon, CopyIcon, RotateCcwIcon } from 'lucide-vue-next'
 import { useFilters } from '@/composables/useFilters'
 import { useI18n } from 'vue-i18n'
 
-const props = defineProps({ orders: Object, filters: Object })
+const props = defineProps({ orders: Object, filters: Object, products: { type: Array, default: () => [] } })
 const { form } = useFilters(props.filters)
 const { t } = useI18n()
+
+const periodOptions = computed(() => [
+    { value: '', label: t('orders.period_all') },
+    { value: 'today', label: t('orders.period_today') },
+    { value: 'this_month', label: t('orders.period_this_month') },
+    { value: 'last_30_days', label: t('orders.period_last_30_days') }
+])
+
+const setPeriod = (val) => {
+    form.value.period = val
+}
+
+const productOptions = computed(() => [
+    { value: '', label: t('orders.all_products') },
+    ...(props.products || []).map(p => ({
+        value: p.id,
+        label: p.name
+    }))
+])
+
+const hasActiveFilters = computed(() => {
+    return Boolean(
+        form.value.search ||
+        form.value.status ||
+        form.value.product_id ||
+        form.value.period ||
+        form.value.show_cancelled
+    )
+})
+
+const resetFilters = () => {
+    form.value.search = ''
+    form.value.status = ''
+    form.value.product_id = ''
+    form.value.period = ''
+    form.value.show_cancelled = false
+}
+
+const excelExportUrl = computed(() => {
+    const params = {}
+    if (form.value.status) params.status = form.value.status
+    if (form.value.period) params.period = form.value.period
+    if (form.value.product_id) params.product_id = form.value.product_id
+    if (form.value.show_cancelled) params.show_cancelled = 1
+    return route('export.orders.excel', params)
+})
 
 const onSort = ({ key, dir }) => {
     form.value.sort = key;

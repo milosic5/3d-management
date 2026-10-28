@@ -34,10 +34,24 @@ class OrderController extends Controller
                 $query->where('status', '!=', 'cancelled');
             }
         }
-        if ($from = $request->input('from')) {
+        if ($productId = $request->input('product_id')) {
+            $query->whereHas('items', function ($q) use ($productId) {
+                $q->where('product_id', $productId);
+            });
+        }
+
+        if ($period = $request->input('period')) {
+            if ($period === 'today') {
+                $query->whereDate('created_at', now()->today());
+            } elseif ($period === 'this_month') {
+                $query->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+            } elseif ($period === 'last_30_days') {
+                $query->whereDate('created_at', '>=', now()->subDays(30));
+            }
+        } elseif ($from = $request->input('from')) {
             $query->whereDate('created_at', '>=', $from);
         }
-        if ($to = $request->input('to')) {
+        if (!$period && $to = $request->input('to')) {
             $query->whereDate('created_at', '<=', $to);
         }
 
@@ -52,7 +66,8 @@ class OrderController extends Controller
 
         return Inertia::render('Orders/Index', [
             'orders' => $query->paginate(15)->withQueryString(),
-            'filters' => $request->only(['search', 'status', 'from', 'to', 'sort', 'direction', 'show_cancelled'])
+            'products' => Product::select('id', 'name')->orderBy('name')->get(),
+            'filters' => $request->only(['search', 'status', 'from', 'to', 'sort', 'direction', 'show_cancelled', 'period', 'product_id'])
         ]);
     }
 

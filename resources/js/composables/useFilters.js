@@ -10,6 +10,8 @@ export function useFilters(initialData) {
         category: initialData.category || '',
         from: initialData.from || '',
         to: initialData.to || '',
+        product_id: initialData.product_id || '',
+        period: initialData.period || '',
         ...initialData
     });
 

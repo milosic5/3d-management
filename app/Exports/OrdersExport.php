@@ -24,13 +24,35 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping, ShouldA
     {
         $query = Order::with(['items.product', 'creator']);
 
-        if (!empty($this->filters['status'])) {
-            $query->where('status', $this->filters['status']);
+        if (!empty($this->filters['show_cancelled'])) {
+            $query->where('status', 'cancelled');
+        } else {
+            if (!empty($this->filters['status'])) {
+                $query->where('status', $this->filters['status']);
+            } else {
+                $query->where('status', '!=', 'cancelled');
+            }
         }
-        if (!empty($this->filters['from'])) {
+
+        if (!empty($this->filters['product_id'])) {
+            $query->whereHas('items', function ($q) {
+                $q->where('product_id', $this->filters['product_id']);
+            });
+        }
+
+        if (!empty($this->filters['period'])) {
+            $period = $this->filters['period'];
+            if ($period === 'today') {
+                $query->whereDate('created_at', now()->today());
+            } elseif ($period === 'this_month') {
+                $query->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+            } elseif ($period === 'last_30_days') {
+                $query->whereDate('created_at', '>=', now()->subDays(30));
+            }
+        } elseif (!empty($this->filters['from'])) {
             $query->whereDate('created_at', '>=', $this->filters['from']);
         }
-        if (!empty($this->filters['to'])) {
+        if (empty($this->filters['period']) && !empty($this->filters['to'])) {
             $query->whereDate('created_at', '<=', $this->filters['to']);
         }
 
