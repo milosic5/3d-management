@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Filament;
 use App\Models\Investment;
 use App\Models\InvestmentCategory;
-use App\Models\Filament;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,8 +15,10 @@ class InvestmentController extends Controller
         $query = Investment::with('category');
 
         if ($search = $request->input('search')) {
-            $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%");
+            });
         }
         if ($category = $request->input('category')) {
             $query->where('category_id', $category);
@@ -46,8 +48,8 @@ class InvestmentController extends Controller
             'categories' => InvestmentCategory::select('id', 'name')->get(),
             'filters' => $request->only(['search', 'category', 'from', 'to', 'sort', 'dir']),
             'summary' => [
-                'totalInvested' => $totalInvested
-            ]
+                'totalInvested' => $totalInvested,
+            ],
         ]);
     }
 
@@ -55,7 +57,7 @@ class InvestmentController extends Controller
     {
         return Inertia::render('Investments/Create', [
             'categories' => InvestmentCategory::all(),
-            'filaments' => Filament::get(['name', 'price_per_kg'])->unique('name')->values()
+            'filaments' => Filament::get(['name', 'price_per_kg'])->unique('name')->values(),
         ]);
     }
 
@@ -70,13 +72,14 @@ class InvestmentController extends Controller
             'quantity' => 'required|numeric|min:0',
             'unit' => 'required|string|max:50',
             'invested_at' => 'required|date',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         $validated['amount'] = $validated['unit_cost'] * ($validated['quantity'] ?: 1);
         $validated['created_by'] = $request->user()->id;
 
         Investment::create($validated);
+
         return redirect()->route('investments.index');
     }
 
@@ -85,7 +88,7 @@ class InvestmentController extends Controller
         return Inertia::render('Investments/Edit', [
             'investment' => $investment,
             'categories' => InvestmentCategory::all(),
-            'filaments' => Filament::get(['name', 'price_per_kg'])->unique('name')->values()
+            'filaments' => Filament::get(['name', 'price_per_kg'])->unique('name')->values(),
         ]);
     }
 
@@ -100,12 +103,13 @@ class InvestmentController extends Controller
             'quantity' => 'required|numeric|min:0',
             'unit' => 'required|string|max:50',
             'invested_at' => 'required|date',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         $validated['amount'] = $validated['unit_cost'] * ($validated['quantity'] ?: 1);
 
         $investment->update($validated);
+
         return redirect()->route('investments.index');
     }
 
@@ -113,6 +117,7 @@ class InvestmentController extends Controller
     {
         $this->authorize('delete', $investment);
         $investment->delete();
+
         return redirect()->route('investments.index');
     }
 }

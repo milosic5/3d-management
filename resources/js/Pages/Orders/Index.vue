@@ -7,6 +7,9 @@
         <a :href="excelExportUrl" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors mr-2">
             <DownloadIcon class="w-4 h-4 mr-1.5 text-green-600" /> Excel
         </a>
+        <Link v-if="$page.props.auth.can.manageOrderTrash" :href="route('orders.trash')">
+            <Button variant="outline" class="mr-2"><TrashIcon class="w-4 h-4 mr-2" /> {{ $t('orders.trash') }}</Button>
+        </Link>
         <Link :href="route('orders.create')">
             <Button class="bg-orange-500 hover:bg-orange-600 text-white"><PlusIcon class="w-4 h-4 mr-2" /> {{ $t('orders.new') }}</Button>
         </Link>

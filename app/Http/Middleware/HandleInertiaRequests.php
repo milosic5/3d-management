@@ -2,11 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Calibration;
+use App\Models\Filament;
+use App\Models\Order;
+use App\Models\Packaging;
+use App\Models\Printer;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
-use App\Models\Order;
-use App\Models\Filament;
-use App\Models\Printer;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -50,20 +54,41 @@ class HandleInertiaRequests extends Middleware
             })->count();
 
             $notifications = [
-                'activeOrders'    => $activeOrdersCount,
-                'emptyFilaments'  => $emptyFilamentsCount,
+                'activeOrders' => $activeOrdersCount,
+                'emptyFilaments' => $emptyFilamentsCount,
                 'printerWarnings' => $printerWarnings,
-                'total'           => ($activeOrdersCount > 0 ? 1 : 0) + ($emptyFilamentsCount > 0 ? 1 : 0) + ($printerWarnings > 0 ? 1 : 0),
+                'total' => ($activeOrdersCount > 0 ? 1 : 0) + ($emptyFilamentsCount > 0 ? 1 : 0) + ($printerWarnings > 0 ? 1 : 0),
             ];
         }
 
         return [
             ...parent::share($request),
             'auth' => [
-                'user'                  => $user,
+                'user' => $user,
                 'hasPrinterNotifications' => $user && ($notifications['printerWarnings'] ?? 0) > 0,
+                'can' => $user ? $this->abilities($user) : [],
             ],
             'notifications' => $notifications,
+        ];
+    }
+
+    /**
+     * Permissions the frontend needs to show or hide actions (resolved through policies).
+     *
+     * @return array<string, bool>
+     */
+    private function abilities(User $user): array
+    {
+        return [
+            'deleteOrders' => $user->can('delete', Order::class),
+            'manageOrderTrash' => $user->can('viewTrashed', Order::class),
+            'deleteProducts' => $user->can('delete', Product::class),
+            'manageProductTrash' => $user->can('viewTrashed', Product::class),
+            'deleteFilaments' => $user->can('delete', Filament::class),
+            'deletePrinters' => $user->can('delete', Printer::class),
+            'deleteMaintenances' => $user->can('deleteMaintenance', Printer::class),
+            'deletePackagings' => $user->can('delete', Packaging::class),
+            'deleteCalibrations' => $user->can('delete', Calibration::class),
         ];
     }
 }

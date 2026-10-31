@@ -19,7 +19,7 @@
             <Button variant="ghost" size="icon" @click="openEditDialog(printer)" class="h-8 w-8">
               <PencilIcon class="w-4 h-4 text-slate-500" />
             </Button>
-            <Button variant="ghost" size="icon" @click="confirmDelete(printer)" class="h-8 w-8 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30">
+            <Button v-if="$page.props.auth.can.deletePrinters" variant="ghost" size="icon" @click="confirmDelete(printer)" class="h-8 w-8 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30">
               <TrashIcon class="w-4 h-4 text-slate-500" />
             </Button>
           </div>

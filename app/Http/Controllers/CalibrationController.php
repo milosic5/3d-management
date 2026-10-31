@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Calibration;
 use App\Models\Filament;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class CalibrationController extends Controller
 {
@@ -32,10 +32,10 @@ class CalibrationController extends Controller
                 $query->where(function ($q) use ($brands, $topBrands) {
                     // Extract non-'others' brands that the user checked
                     $checkedKnownBrands = array_diff($brands, ['others']);
-                    
+
                     if (count($checkedKnownBrands) > 0) {
                         $q->whereIn('filaments.brand', $checkedKnownBrands)
-                          ->orWhereNotIn('filaments.brand', $topBrands);
+                            ->orWhereNotIn('filaments.brand', $topBrands);
                     } else {
                         // User only checked 'others'
                         $q->whereNotIn('filaments.brand', $topBrands);
@@ -69,7 +69,7 @@ class CalibrationController extends Controller
         return Inertia::render('Calibrations/Index', [
             'calibrations' => $calibrations,
             'topBrands' => $topBrands,
-            'filters' => $request->only(['brands', 'sort', 'direction'])
+            'filters' => $request->only(['brands', 'sort', 'direction']),
         ]);
     }
 
@@ -82,21 +82,24 @@ class CalibrationController extends Controller
             ->get();
 
         return Inertia::render('Calibrations/Create', [
-            'availableFilaments' => $availableFilaments
+            'availableFilaments' => $availableFilaments,
         ]);
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Calibration::class);
+
         $validated = $request->validate([
             'filament_id' => 'required|exists:filaments,id|unique:calibrations,filament_id',
             'temperature' => 'required|integer',
             'flow_ratio' => 'required|numeric',
             'pressure_advance' => 'required|numeric',
-            'max_volumetric_speed' => 'required|numeric'
+            'max_volumetric_speed' => 'required|numeric',
         ]);
 
         Calibration::create($validated);
+
         return redirect()->route('calibrations.index')->with('success', 'Calibration saved successfully.');
     }
 
@@ -105,7 +108,7 @@ class CalibrationController extends Controller
         // Make sure to retrieve the filament that this calibration belongs to
         // and add it to the available filaments so it can be selected in the edit dropdown
         $calibration->load('filament');
-        
+
         $availableFilaments = Filament::whereDoesntHave('calibration')
             ->orWhere('id', $calibration->filament_id)
             ->orderBy('brand')
@@ -114,27 +117,33 @@ class CalibrationController extends Controller
 
         return Inertia::render('Calibrations/Edit', [
             'calibration' => $calibration,
-            'availableFilaments' => $availableFilaments
+            'availableFilaments' => $availableFilaments,
         ]);
     }
 
     public function update(Request $request, Calibration $calibration)
     {
+        $this->authorize('update', $calibration);
+
         $validated = $request->validate([
-            'filament_id' => 'required|exists:filaments,id|unique:calibrations,filament_id,' . $calibration->id,
+            'filament_id' => 'required|exists:filaments,id|unique:calibrations,filament_id,'.$calibration->id,
             'temperature' => 'required|integer',
             'flow_ratio' => 'required|numeric',
             'pressure_advance' => 'required|numeric',
-            'max_volumetric_speed' => 'required|numeric'
+            'max_volumetric_speed' => 'required|numeric',
         ]);
 
         $calibration->update($validated);
+
         return redirect()->route('calibrations.index')->with('success', 'Calibration updated successfully.');
     }
 
     public function destroy(Calibration $calibration)
     {
+        $this->authorize('delete', $calibration);
+
         $calibration->delete();
+
         return redirect()->route('calibrations.index')->with('success', 'Calibration deleted successfully.');
     }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
-use App\Models\Product;
 use App\Models\Filament;
+use App\Models\Order;
 use App\Models\OrderHistory;
+use App\Models\Product;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class OrderController extends Controller
 {
@@ -17,12 +17,12 @@ class OrderController extends Controller
         $query = Order::with(['items.product', 'creator']);
 
         if ($search = $request->input('search')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'like', "%{$search}%")
-                  ->orWhere('customer_name', 'like', "%{$search}%")
-                  ->orWhereHas('items.product', function($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('customer_name', 'like', "%{$search}%")
+                    ->orWhereHas('items.product', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
         if ($request->boolean('show_cancelled')) {
@@ -51,7 +51,7 @@ class OrderController extends Controller
         } elseif ($from = $request->input('from')) {
             $query->whereDate('created_at', '>=', $from);
         }
-        if (!$period && $to = $request->input('to')) {
+        if (! $period && $to = $request->input('to')) {
             $query->whereDate('created_at', '<=', $to);
         }
 
@@ -67,7 +67,7 @@ class OrderController extends Controller
         return Inertia::render('Orders/Index', [
             'orders' => $query->paginate(15)->withQueryString(),
             'products' => Product::select('id', 'name')->orderBy('name')->get(),
-            'filters' => $request->only(['search', 'status', 'from', 'to', 'sort', 'direction', 'show_cancelled', 'period', 'product_id'])
+            'filters' => $request->only(['search', 'status', 'from', 'to', 'sort', 'direction', 'show_cancelled', 'period', 'product_id']),
         ]);
     }
 
@@ -94,26 +94,26 @@ class OrderController extends Controller
         DB::transaction(function () use ($validated, $request) {
             $order = Order::create([
                 'customer_name' => $validated['customer_name'],
-                'notes'         => $validated['notes'],
-                'status'        => $validated['status'],
+                'notes' => $validated['notes'],
+                'status' => $validated['status'],
                 'estimated_print_minutes' => $validated['estimated_print_minutes'],
-                'created_by'    => $request->user()->id,
-                'created_at'    => $validated['created_at'] ?? now(),
-                'total_price'   => 0,
+                'created_by' => $request->user()->id,
+                'created_at' => $validated['created_at'] ?? now(),
+                'total_price' => 0,
             ]);
 
             [$totalPrice, $totalMinutes] = $this->syncOrderItems($order, $validated['items']);
 
             $order->update([
-                'total_price'             => $totalPrice,
+                'total_price' => $totalPrice,
                 'estimated_print_minutes' => $validated['estimated_print_minutes'] ?? $totalMinutes,
             ]);
 
             // Log creation
             OrderHistory::create([
-                'order_id'  => $order->id,
-                'user_id'   => $request->user()->id,
-                'action'    => 'created',
+                'order_id' => $order->id,
+                'user_id' => $request->user()->id,
+                'action' => 'created',
                 'to_status' => $order->status,
             ]);
         });
@@ -126,7 +126,7 @@ class OrderController extends Controller
         $this->authorize('view', $order);
 
         return Inertia::render('Orders/Show', [
-            'order' => $order->load(['items.product.filament', 'items.filament', 'creator', 'updater', 'history'])
+            'order' => $order->load(['items.product.filament', 'items.filament', 'creator', 'updater', 'history']),
         ]);
     }
 
@@ -135,9 +135,9 @@ class OrderController extends Controller
         $this->authorize('update', $order);
 
         return Inertia::render('Orders/Edit', [
-            'order'     => $order->load('items'),
-            'products'  => Product::where('is_active', true)->select('id', 'name', 'color_hex', 'price', 'print_time_minutes', 'weight_grams')->latest()->get(),
-            'filaments' => Filament::select('id', 'brand', 'name', 'color_name', 'color_hex', 'price_per_kg')->get()
+            'order' => $order->load('items'),
+            'products' => Product::where('is_active', true)->select('id', 'name', 'color_hex', 'price', 'print_time_minutes', 'weight_grams')->latest()->get(),
+            'filaments' => Filament::select('id', 'brand', 'name', 'color_name', 'color_hex', 'price_per_kg')->get(),
         ]);
     }
 
@@ -149,13 +149,16 @@ class OrderController extends Controller
             $validated = $this->validateOrderRequest($request);
 
             DB::transaction(function () use ($validated, $request, $order) {
+                // Read before update(): afterwards getOriginal() already returns the new status.
+                $oldStatus = $order->status;
+
                 $order->update([
-                    'customer_name'           => $validated['customer_name'],
-                    'notes'                   => $validated['notes'],
-                    'status'                  => $validated['status'],
+                    'customer_name' => $validated['customer_name'],
+                    'notes' => $validated['notes'],
+                    'status' => $validated['status'],
                     'estimated_print_minutes' => $validated['estimated_print_minutes'],
-                    'updated_by'              => $request->user()->id,
-                    'created_at'              => $validated['created_at'] ?? $order->created_at,
+                    'updated_by' => $request->user()->id,
+                    'created_at' => $validated['created_at'] ?? $order->created_at,
                 ]);
 
                 $order->items()->delete();
@@ -163,18 +166,28 @@ class OrderController extends Controller
                 [$totalPrice, $totalMinutes] = $this->syncOrderItems($order, $validated['items']);
 
                 $order->update([
-                    'total_price'             => $totalPrice,
+                    'total_price' => $totalPrice,
                     'estimated_print_minutes' => $validated['estimated_print_minutes'] ?? $totalMinutes,
                 ]);
 
                 // Log update
                 OrderHistory::create([
-                    'order_id'    => $order->id,
-                    'user_id'     => $request->user()->id,
-                    'action'      => 'updated',
-                    'from_status' => $order->getOriginal('status'),
-                    'to_status'   => $validated['status'],
+                    'order_id' => $order->id,
+                    'user_id' => $request->user()->id,
+                    'action' => 'updated',
+                    'from_status' => $oldStatus,
+                    'to_status' => $validated['status'],
                 ]);
+
+                if ($oldStatus !== $validated['status']) {
+                    OrderHistory::create([
+                        'order_id' => $order->id,
+                        'user_id' => $request->user()->id,
+                        'action' => 'status_changed',
+                        'from_status' => $oldStatus,
+                        'to_status' => $validated['status'],
+                    ]);
+                }
             });
 
             return redirect()->route('orders.index');
@@ -187,18 +200,18 @@ class OrderController extends Controller
         $oldStatus = $order->status;
 
         $order->update([
-            'status'     => $validated['status'],
+            'status' => $validated['status'],
             'updated_by' => $request->user()->id,
         ]);
 
         // Log status change
         if ($oldStatus !== $validated['status']) {
             OrderHistory::create([
-                'order_id'    => $order->id,
-                'user_id'     => $request->user()->id,
-                'action'      => 'status_changed',
+                'order_id' => $order->id,
+                'user_id' => $request->user()->id,
+                'action' => 'status_changed',
                 'from_status' => $oldStatus,
-                'to_status'   => $validated['status'],
+                'to_status' => $validated['status'],
             ]);
         }
 
@@ -213,6 +226,35 @@ class OrderController extends Controller
         return redirect()->route('orders.index');
     }
 
+    public function trash()
+    {
+        $this->authorize('viewTrashed', Order::class);
+
+        return Inertia::render('Orders/Trash', [
+            'orders' => Order::onlyTrashed()->withCount('items')->latest('deleted_at')->paginate(15),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $order = Order::onlyTrashed()->findOrFail($id);
+        $this->authorize('restore', $order);
+        $order->restore();
+
+        return back();
+    }
+
+    public function forceDelete($id)
+    {
+        $order = Order::onlyTrashed()->findOrFail($id);
+        $this->authorize('forceDelete', $order);
+
+        // Items and history are removed by the database cascade.
+        $order->forceDelete();
+
+        return back();
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Private helpers
     // ─────────────────────────────────────────────────────────────────────────
@@ -223,22 +265,22 @@ class OrderController extends Controller
     private function validateOrderRequest(Request $request): array
     {
         return $request->validate([
-            'customer_name'              => 'required|string|max:255',
-            'notes'                      => 'nullable|string',
-            'status'                     => 'required|in:received,printing,finished,delivered,cancelled',
-            'estimated_print_minutes'    => 'nullable|integer',
-            'created_at'                 => 'nullable|date',
-            'items'                      => 'required|array|min:1',
-            'items.*.product_id'         => 'required|exists:products,id',
-            'items.*.quantity'           => 'required|integer|min:1',
-            'items.*.unit_price'         => 'required|numeric',
-            'items.*.filament_id'        => 'nullable|exists:filaments,id',
-            'items.*.print_cost'         => 'nullable|numeric|min:0',
+            'customer_name' => 'required|string|max:255',
+            'notes' => 'nullable|string',
+            'status' => 'required|in:received,printing,finished,delivered,cancelled',
+            'estimated_print_minutes' => 'nullable|integer',
+            'created_at' => 'nullable|date',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit_price' => 'required|numeric',
+            'items.*.filament_id' => 'nullable|exists:filaments,id',
+            'items.*.print_cost' => 'nullable|numeric|min:0',
             'items.*.print_time_minutes' => 'nullable|integer|min:0',
-            'items.*.color_name'         => 'nullable|string',
-            'items.*.color_hex'          => 'nullable|string|size:7',
-            'items.*.weight_grams'       => 'nullable|numeric|min:0',
-            'items.*.notes'              => 'nullable|string',
+            'items.*.color_name' => 'nullable|string',
+            'items.*.color_hex' => 'nullable|string|size:7',
+            'items.*.weight_grams' => 'nullable|numeric|min:0',
+            'items.*.notes' => 'nullable|string',
         ]);
     }
 
@@ -247,27 +289,27 @@ class OrderController extends Controller
      */
     private function syncOrderItems(Order $order, array $items): array
     {
-        $totalPrice   = 0;
+        $totalPrice = 0;
         $totalMinutes = 0;
 
         foreach ($items as $item) {
-            $product  = Product::find($item['product_id']);
-            $filament = !empty($item['filament_id']) ? Filament::find($item['filament_id']) : null;
+            $product = Product::find($item['product_id']);
+            $filament = ! empty($item['filament_id']) ? Filament::find($item['filament_id']) : null;
 
             $order->items()->create([
-                'product_id'         => $product->id,
-                'filament_id'        => $item['filament_id'] ?? null,
-                'quantity'           => $item['quantity'],
-                'unit_price'         => $item['unit_price'],
-                'print_cost'         => $item['print_cost'] ?? 0,
+                'product_id' => $product->id,
+                'filament_id' => $item['filament_id'] ?? null,
+                'quantity' => $item['quantity'],
+                'unit_price' => $item['unit_price'],
+                'print_cost' => $item['print_cost'] ?? 0,
                 'print_time_minutes' => $item['print_time_minutes'] ?? $product->print_time_minutes,
-                'weight_grams'       => $item['weight_grams'] ?? $product->weight_grams,
-                'color_name'         => $filament ? $filament->color_name : ($item['color_name'] ?? $product->color_name),
-                'color_hex'          => $filament ? $filament->color_hex  : ($item['color_hex']  ?? $product->color_hex),
-                'notes'              => $item['notes'] ?? null,
+                'weight_grams' => $item['weight_grams'] ?? $product->weight_grams,
+                'color_name' => $filament ? $filament->color_name : ($item['color_name'] ?? $product->color_name),
+                'color_hex' => $filament ? $filament->color_hex : ($item['color_hex'] ?? $product->color_hex),
+                'notes' => $item['notes'] ?? null,
             ]);
 
-            $totalPrice   += ($item['unit_price'] * $item['quantity']);
+            $totalPrice += ($item['unit_price'] * $item['quantity']);
             $totalMinutes += ($item['print_time_minutes'] ?? $product->print_time_minutes ?? 0);
         }
 

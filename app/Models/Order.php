@@ -2,18 +2,22 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 class Order extends Model
 {
+    use HasFactory, SoftDeletes;
+
     protected $fillable = [
         'order_number', 'customer_name', 'status',
         'notes', 'total_price', 'estimated_print_minutes',
-        'created_by', 'updated_by', 'created_at'
+        'created_by', 'updated_by', 'created_at',
     ];
 
     protected function casts(): array
@@ -28,22 +32,24 @@ class Order extends Model
     {
         static::creating(function (Order $order) {
             if (empty($order->order_number)) {
-                $dateToUse = $order->created_at ? \Carbon\Carbon::parse($order->created_at) : now();
-                $prefix = 'ORD-' . $dateToUse->format('Ym') . '-';
-                
+                $dateToUse = $order->created_at ? Carbon::parse($order->created_at) : now();
+                $prefix = 'ORD-'.$dateToUse->format('Ym').'-';
+
                 DB::transaction(function () use ($order, $prefix) {
-                    $lastOrder = Order::where('order_number', 'like', $prefix . '%')
+                    // Trashed orders still own their number (order_number is unique).
+                    $lastOrder = Order::withTrashed()
+                        ->where('order_number', 'like', $prefix.'%')
                         ->lockForUpdate()
                         ->orderBy('id', 'desc')
                         ->first();
-                    
+
                     $nextSequence = 1;
                     if ($lastOrder) {
                         $lastSequence = (int) substr($lastOrder->order_number, -4);
                         $nextSequence = $lastSequence + 1;
                     }
-                    
-                    $order->order_number = $prefix . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+
+                    $order->order_number = $prefix.str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
                 });
             }
         });

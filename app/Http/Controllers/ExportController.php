@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\OrdersExport;
 use App\Exports\InvestmentsExport;
+use App\Exports\OrdersExport;
 use App\Models\Order;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ExportController extends Controller
 {
@@ -17,7 +17,7 @@ class ExportController extends Controller
     public function ordersExcel(Request $request)
     {
         $filters = $request->only(['status', 'from', 'to', 'period', 'product_id', 'show_cancelled']);
-        $filename = 'orders_' . now()->format('Y-m-d') . '.xlsx';
+        $filename = 'orders_'.now()->format('Y-m-d').'.xlsx';
 
         return Excel::download(new OrdersExport($filters), $filename);
     }
@@ -28,7 +28,7 @@ class ExportController extends Controller
     public function investmentsExcel(Request $request)
     {
         $filters = $request->only(['category', 'from', 'to']);
-        $filename = 'investments_' . now()->format('Y-m-d') . '.xlsx';
+        $filename = 'investments_'.now()->format('Y-m-d').'.xlsx';
 
         return Excel::download(new InvestmentsExport($filters), $filename);
     }
@@ -38,6 +38,8 @@ class ExportController extends Controller
      */
     public function orderPdf(Order $order)
     {
+        $this->authorize('view', $order);
+
         $order->load(['items.product', 'creator']);
 
         $pdf = Pdf::loadView('pdf.order', compact('order'))

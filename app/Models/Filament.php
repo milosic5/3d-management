@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Filament extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'brand', 'name', 'material', 'color_name',
         'color_hex', 'price_per_kg', 'empty_spool_weight_grams', 'notes',
-        'stock_rolls'
+        'stock_rolls',
     ];
 
     protected function casts(): array

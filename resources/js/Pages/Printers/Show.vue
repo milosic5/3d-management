@@ -66,7 +66,7 @@
                     <button @click="openEditModal(m)" class="text-blue-500 hover:text-blue-700 mr-3" title="Izmeni">
                       <PencilIcon class="w-4 h-4 inline" />
                     </button>
-                    <button @click="confirmDelete(m)" class="text-red-500 hover:text-red-700" title="Obriši">
+                    <button v-if="$page.props.auth.can.deleteMaintenances" @click="confirmDelete(m)" class="text-red-500 hover:text-red-700" title="Obriši">
                       <TrashIcon class="w-4 h-4 inline" />
                     </button>
                   </td>

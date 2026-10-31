@@ -2,19 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name', 'description', 'material', 'filament_id',
         'color_name', 'color_hex', 'weight_grams',
         'print_time_minutes', 'price', 'image_path',
-        'model_file_path', 'model_file_name', 'is_active'
+        'model_file_path', 'model_file_name',
+        'model_file_path_2', 'model_file_name_2', 'is_active',
     ];
 
     protected function casts(): array

@@ -50,7 +50,7 @@ const forceDelete = (id) => {
 
 const columns = [
   { header: 'Product Name', accessorKey: 'name' },
-  { header: 'Material', accessorKey: 'material', cell: ({ row }) => row.original.material.toUpperCase() },
+  { header: 'Material', accessorKey: 'material', cell: ({ row }) => row.original.material?.toUpperCase() ?? '—' },
   {
     header: 'Deleted At',
     cell: ({ row }) => new Date(row.original.deleted_at).toLocaleString()

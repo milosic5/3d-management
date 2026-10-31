@@ -212,6 +212,7 @@ import { useI18n } from 'vue-i18n'
 
 const props = defineProps({ packagings: Array })
 const { t } = useI18n()
+const page = usePage()
 
 const activeTab = ref('box')
 const searchQuery = ref('')
@@ -572,7 +573,9 @@ const columns = computed(() => {
       id: 'actions',
       cell: ({ row }) => h('div', { class: 'flex items-center space-x-2' }, [
           h(Button, { variant: 'ghost', size: 'icon', onClick: () => openModal(row.original.type, row.original) }, () => h(PencilIcon, { class: 'w-4 h-4 text-slate-500' })),
-          h(Button, { variant: 'ghost', size: 'icon', onClick: () => confirmDelete(row.original) }, () => h(TrashIcon, { class: 'w-4 h-4 text-red-500' }))
+          page.props.auth.can.deletePackagings
+              ? h(Button, { variant: 'ghost', size: 'icon', onClick: () => confirmDelete(row.original) }, () => h(TrashIcon, { class: 'w-4 h-4 text-red-500' }))
+              : null
       ])
     }
   ]

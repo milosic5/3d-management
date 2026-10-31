@@ -93,7 +93,7 @@
                     <Link :href="route('calibrations.edit', item.id)">
                         <Button variant="ghost" size="icon"><PencilIcon class="w-4 h-4 text-slate-500" /></Button>
                     </Link>
-                    <Button variant="ghost" size="icon" @click="confirmDelete(item)">
+                    <Button v-if="$page.props.auth.can.deleteCalibrations" variant="ghost" size="icon" @click="confirmDelete(item)">
                         <TrashIcon class="w-4 h-4 text-red-500" />
                     </Button>
                 </div>

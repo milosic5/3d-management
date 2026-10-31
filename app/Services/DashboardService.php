@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\Order;
 use App\Models\Investment;
+use App\Models\Order;
 use App\Models\Product;
-use Illuminate\Support\Facades\DB;
+use App\Support\Sql;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
@@ -15,9 +17,10 @@ class DashboardService
         $now = Carbon::now();
         if (preg_match('/^\d{4}-\d{2}$/', $period)) {
             $date = Carbon::createFromFormat('Y-m', $period);
+
             return [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()];
         }
-        
+
         return match ($period) {
             'this_month' => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()],
             'last_month' => [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth()],
@@ -55,33 +58,35 @@ class DashboardService
         [$start, $end] = $this->getDateRange($period);
 
         $revenue = DB::table('orders')
-            ->select(DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"), DB::raw('SUM(total_price) as revenue'))
+            ->whereNull('orders.deleted_at')
+            ->select(DB::raw(Sql::yearMonth('created_at').' as month'), DB::raw('SUM(total_price) as revenue'))
             ->where('status', 'delivered')
             ->whereBetween('created_at', [$start, $end])
-            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
+            ->groupByRaw(Sql::yearMonth('created_at'))
             ->orderBy('month')
             ->get()->keyBy('month');
 
         $costs = DB::table('investments')
-            ->select(DB::raw("DATE_FORMAT(invested_at, '%Y-%m') as month"), DB::raw('SUM(amount) as costs'))
+            ->select(DB::raw(Sql::yearMonth('invested_at').' as month'), DB::raw('SUM(amount) as costs'))
             ->whereBetween('invested_at', [$start, $end])
-            ->groupByRaw("DATE_FORMAT(invested_at, '%Y-%m')")
+            ->groupByRaw(Sql::yearMonth('invested_at'))
             ->orderBy('month')
             ->get()->keyBy('month');
 
         $months = collect($revenue->keys())->merge($costs->keys())->unique()->sort()->values();
 
-        return $months->map(fn($m) => [
-            'month'   => $m,
+        return $months->map(fn ($m) => [
+            'month' => $m,
             'revenue' => (float) ($revenue[$m]->revenue ?? 0),
-            'costs'   => (float) ($costs[$m]->costs   ?? 0),
-            'profit'  => (float) ($revenue[$m]->revenue ?? 0) - (float) ($costs[$m]->costs ?? 0),
+            'costs' => (float) ($costs[$m]->costs ?? 0),
+            'profit' => (float) ($revenue[$m]->revenue ?? 0) - (float) ($costs[$m]->costs ?? 0),
         ])->values()->toArray();
     }
 
     public function getCostsByCategory($period)
     {
         [$start, $end] = $this->getDateRange($period);
+
         return Investment::join('investment_categories', 'investments.category_id', '=', 'investment_categories.id')
             ->select('investment_categories.name', DB::raw('SUM(investments.amount) as total'))
             ->whereBetween('investments.invested_at', [$start, $end])
@@ -95,6 +100,7 @@ class DashboardService
         [$start, $end] = $this->getDateRange($period);
         $rows = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->whereNull('orders.deleted_at')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->select('products.name', 'products.color_hex', DB::raw('SUM(order_items.unit_price * order_items.quantity) as revenue'))
             ->where('orders.status', 'delivered')
@@ -116,14 +122,15 @@ class DashboardService
         [$start, $end] = $this->getDateRange($period);
 
         return DB::table('orders')
+            ->whereNull('orders.deleted_at')
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
+                DB::raw(Sql::yearMonth('created_at').' as month'),
                 DB::raw('SUM(total_price) as revenue'),
                 DB::raw('COUNT(*) as orders')
             )
             ->where('status', 'delivered')
             ->whereBetween('created_at', [$start, $end])
-            ->groupByRaw("DATE_FORMAT(created_at, '%Y-%m')")
+            ->groupByRaw(Sql::yearMonth('created_at'))
             ->orderBy('month')
             ->get()
             ->toArray();
@@ -133,25 +140,26 @@ class DashboardService
     {
         $activeProducts = Product::where('is_active', true)->count();
         $avgPrice = Product::where('is_active', true)->avg('price');
-        
+
         $deliveredItems = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->whereNull('orders.deleted_at')
             ->where('orders.status', 'delivered')
             ->select(
                 DB::raw('COUNT(DISTINCT orders.id) as total_prints'),
                 DB::raw('SUM(order_items.print_time_minutes) as total_minutes'),
                 DB::raw('SUM(order_items.weight_grams) as total_grams')
             )->first();
-            
+
         $queueMinutes = Order::whereIn('status', ['received', 'printing'])->sum('estimated_print_minutes');
 
         return [
             'totalProducts' => $activeProducts,
-            'avgProductPrice' => round((float)$avgPrice, 2),
-            'totalPrints' => (int)($deliveredItems->total_prints ?? 0),
+            'avgProductPrice' => round((float) $avgPrice, 2),
+            'totalPrints' => (int) ($deliveredItems->total_prints ?? 0),
             'totalPrintHours' => round(strval($deliveredItems->total_minutes ?? 0) / 60, 1),
             'totalFilamentKg' => round(strval($deliveredItems->total_grams ?? 0) / 1000, 2),
-            'queueMinutes' => (int)$queueMinutes,
+            'queueMinutes' => (int) $queueMinutes,
         ];
     }
 
@@ -172,6 +180,7 @@ class DashboardService
     {
         $rows = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->whereNull('orders.deleted_at')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->select(
                 'products.name',
@@ -199,12 +208,13 @@ class DashboardService
      * Merge all rows whose name contains "cep" or "čep" (case-insensitive)
      * into a single "Cepovi" entry, summing numeric columns.
      */
-    private function groupCepovi(array $rows, string ...$sumKeys): \Illuminate\Support\Collection
+    private function groupCepovi(array $rows, string ...$sumKeys): Collection
     {
         $cepPattern = '/[čc]ep/iu';
 
         $grouped = collect($rows)->groupBy(function ($row) use ($cepPattern) {
             $name = is_array($row) ? $row['name'] : $row->name;
+
             return preg_match($cepPattern, $name) ? '__cepovi__' : $name;
         });
 
@@ -217,18 +227,20 @@ class DashboardService
 
             // Sum all numeric fields; average the avg_price field
             $summed = $first;
-            $summed['name']      = 'Cepovi';
+            $summed['name'] = 'Cepovi';
             $summed['color_hex'] = '#f97316';
 
             foreach ($first as $col => $val) {
-                if ($col === 'name' || $col === 'color_hex') continue;
+                if ($col === 'name' || $col === 'color_hex') {
+                    continue;
+                }
                 if (is_numeric($val)) {
-                    $summed[$col] = $items->sum(fn($i) => (float)((array)$i)[$col]);
+                    $summed[$col] = $items->sum(fn ($i) => (float) ((array) $i)[$col]);
                 }
             }
 
             if (array_key_exists('avg_price', $summed)) {
-                $summed['avg_price'] = $items->avg(fn($i) => (float)((array)$i)['avg_price']);
+                $summed['avg_price'] = $items->avg(fn ($i) => (float) ((array) $i)['avg_price']);
             }
 
             return $summed;

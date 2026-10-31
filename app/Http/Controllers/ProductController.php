@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Filament;
+use App\Models\Product;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class ProductController extends Controller
 {
     public function index(Request $request)
     {
         $query = Product::with('filament')->where('is_active', true);
-        
+
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%{$search}%");
         }
@@ -32,14 +33,14 @@ class ProductController extends Controller
 
         return Inertia::render('Products/Index', [
             'products' => $query->paginate(15)->withQueryString(),
-            'filters' => $request->only(['search', 'material', 'sort', 'direction'])
+            'filters' => $request->only(['search', 'material', 'sort', 'direction']),
         ]);
     }
 
     public function create()
     {
         return Inertia::render('Products/Create', [
-            'filaments' => Filament::select('id', 'brand', 'name', 'color_hex')->get()
+            'filaments' => Filament::select('id', 'brand', 'name', 'color_hex')->get(),
         ]);
     }
 
@@ -57,7 +58,7 @@ class ProductController extends Controller
             'image' => 'nullable|image|max:5120',
             'model_file' => 'nullable|file|max:102400',
             'model_file_2' => 'nullable|file|max:102400',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
         ]);
 
         if ($request->hasFile('image')) {
@@ -76,7 +77,8 @@ class ProductController extends Controller
             $validated['model_file_path_2'] = $file2->store('models', 'public');
         }
 
-        Product::create($validated);
+        Product::create(Arr::except($validated, ['image', 'model_file', 'model_file_2']));
+
         return redirect()->route('products.index');
     }
 
@@ -84,7 +86,7 @@ class ProductController extends Controller
     {
         return Inertia::render('Products/Edit', [
             'product' => $product,
-            'filaments' => Filament::select('id', 'brand', 'name', 'color_hex')->get()
+            'filaments' => Filament::select('id', 'brand', 'name', 'color_hex')->get(),
         ]);
     }
 
@@ -102,29 +104,36 @@ class ProductController extends Controller
             'image' => 'nullable|image|max:5120',
             'model_file' => 'nullable|file|max:102400',
             'model_file_2' => 'nullable|file|max:102400',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
         ]);
 
         if ($request->hasFile('image')) {
-            if ($product->image_path) Storage::disk('public')->delete($product->image_path);
+            if ($product->image_path) {
+                Storage::disk('public')->delete($product->image_path);
+            }
             $validated['image_path'] = $request->file('image')->store('products', 'public');
         }
 
         if ($request->hasFile('model_file')) {
-            if ($product->model_file_path) Storage::disk('public')->delete($product->model_file_path);
+            if ($product->model_file_path) {
+                Storage::disk('public')->delete($product->model_file_path);
+            }
             $file = $request->file('model_file');
             $validated['model_file_name'] = $file->getClientOriginalName();
             $validated['model_file_path'] = $file->store('models', 'public');
         }
 
         if ($request->hasFile('model_file_2')) {
-            if ($product->model_file_path_2) Storage::disk('public')->delete($product->model_file_path_2);
+            if ($product->model_file_path_2) {
+                Storage::disk('public')->delete($product->model_file_path_2);
+            }
             $file2 = $request->file('model_file_2');
             $validated['model_file_name_2'] = $file2->getClientOriginalName();
             $validated['model_file_path_2'] = $file2->store('models', 'public');
         }
 
-        $product->update($validated);
+        $product->update(Arr::except($validated, ['image', 'model_file', 'model_file_2']));
+
         return redirect()->route('products.index');
     }
 
@@ -132,13 +141,16 @@ class ProductController extends Controller
     {
         $this->authorize('delete', $product);
         $product->delete();
+
         return redirect()->route('products.index');
     }
 
     public function trash()
     {
+        $this->authorize('viewTrashed', Product::class);
+
         return Inertia::render('Products/Trash', [
-            'products' => Product::onlyTrashed()->with('filament')->paginate(15)
+            'products' => Product::onlyTrashed()->with('filament')->paginate(15),
         ]);
     }
 
@@ -147,6 +159,7 @@ class ProductController extends Controller
         $product = Product::onlyTrashed()->findOrFail($id);
         $this->authorize('restore', $product);
         $product->restore();
+
         return back();
     }
 
@@ -154,12 +167,19 @@ class ProductController extends Controller
     {
         $product = Product::onlyTrashed()->findOrFail($id);
         $this->authorize('forceDelete', $product);
-        
-        if ($product->image_path) Storage::disk('public')->delete($product->image_path);
-        if ($product->model_file_path) Storage::disk('public')->delete($product->model_file_path);
-        if ($product->model_file_path_2) Storage::disk('public')->delete($product->model_file_path_2);
-        
+
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
+        }
+        if ($product->model_file_path) {
+            Storage::disk('public')->delete($product->model_file_path);
+        }
+        if ($product->model_file_path_2) {
+            Storage::disk('public')->delete($product->model_file_path_2);
+        }
+
         $product->forceDelete();
+
         return back();
     }
 
@@ -168,7 +188,7 @@ class ProductController extends Controller
         $path = $index == 2 ? $product->model_file_path_2 : $product->model_file_path;
         $name = $index == 2 ? $product->model_file_name_2 : $product->model_file_name;
 
-        if (!$path || !Storage::disk('public')->exists($path)) {
+        if (! $path || ! Storage::disk('public')->exists($path)) {
             abort(404, 'File not found');
         }
 

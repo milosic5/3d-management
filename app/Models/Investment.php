@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Investment extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'category_id', 'name', 'amount', 'quantity', 'unit',
-        'unit_cost', 'invested_at', 'notes', 'created_by'
+        'unit_cost', 'invested_at', 'notes', 'created_by',
     ];
 
     protected function casts(): array
@@ -40,7 +43,7 @@ class Investment extends Model
                 $latest = self::where('name', $filament->name)
                     ->latest('invested_at')
                     ->first();
-                
+
                 if ($latest && $latest->unit_cost > 0) {
                     $filament->updateQuietly(['price_per_kg' => $latest->unit_cost]);
                 }

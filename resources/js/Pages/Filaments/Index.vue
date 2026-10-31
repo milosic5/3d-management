@@ -105,7 +105,9 @@ const columns = [
     id: 'actions',
     cell: ({ row }) => h('div', { class: 'flex items-center space-x-2' }, [
         h(Link, { href: route('filaments.edit', row.original.id) }, () => h(Button, { variant: 'ghost', size: 'icon' }, () => h(PencilIcon, { class: 'w-4 h-4 text-slate-500' }))),
-        h(Button, { variant: 'ghost', size: 'icon', onClick: () => confirmDelete(row.original) }, () => h(TrashIcon, { class: 'w-4 h-4 text-red-500' }))
+        page.props.auth.can.deleteFilaments
+            ? h(Button, { variant: 'ghost', size: 'icon', onClick: () => confirmDelete(row.original) }, () => h(TrashIcon, { class: 'w-4 h-4 text-red-500' }))
+            : null
     ])
   }
 ]

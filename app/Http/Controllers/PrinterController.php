@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Printer;
+use App\Models\PrinterMaintenance;
+use App\Models\PrinterNozzleChange;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -9,27 +12,29 @@ class PrinterController extends Controller
 {
     public function index()
     {
-        // Eager load maintenance to calculate the appended attribute efficiently if possible, but actually `latest()->get()` is fine 
+        // Eager load maintenance to calculate the appended attribute efficiently if possible, but actually `latest()->get()` is fine
         // since we check it dynamically. To avoid N+1, we can eager load maintenances.
         return Inertia::render('Printers/Index', [
-            'printers' => \App\Models\Printer::with('maintenances')->latest()->get()
+            'printers' => Printer::with('maintenances')->latest()->get(),
         ]);
     }
 
-    public function show(\App\Models\Printer $printer)
+    public function show(Printer $printer)
     {
         $printer->load([
-            'maintenances' => fn($q) => $q->latest('maintenance_month'),
-            'nozzleChanges' => fn($q) => $q->latest()
+            'maintenances' => fn ($q) => $q->latest('maintenance_month'),
+            'nozzleChanges' => fn ($q) => $q->latest(),
         ]);
 
         return Inertia::render('Printers/Show', [
-            'printer' => $printer
+            'printer' => $printer,
         ]);
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Printer::class);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'total_working_hours' => 'required|integer|min:0',
@@ -37,29 +42,35 @@ class PrinterController extends Controller
 
         $validated['last_nozzle_working_hours'] = $validated['total_working_hours'];
 
-        \App\Models\Printer::create($validated);
+        Printer::create($validated);
+
         return back();
     }
 
-    public function update(Request $request, \App\Models\Printer $printer)
+    public function update(Request $request, Printer $printer)
     {
+        $this->authorize('update', $printer);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'total_working_hours' => 'required|integer|min:0',
         ]);
 
         $printer->update($validated);
+
         return back();
     }
 
-    public function resetNozzle(Request $request, \App\Models\Printer $printer)
+    public function resetNozzle(Request $request, Printer $printer)
     {
+        $this->authorize('update', $printer);
+
         $validated = $request->validate([
             'working_hours_at_change' => 'required|integer|min:0',
             'nozzle_diameter' => 'required|numeric',
         ]);
 
-        \App\Models\PrinterNozzleChange::create([
+        PrinterNozzleChange::create([
             'printer_id' => $printer->id,
             'nozzle_diameter' => $validated['nozzle_diameter'],
             'working_hours_at_change' => $validated['working_hours_at_change'],
@@ -80,10 +91,12 @@ class PrinterController extends Controller
         return back();
     }
 
-    public function storeMaintenance(Request $request, \App\Models\Printer $printer)
+    public function storeMaintenance(Request $request, Printer $printer)
     {
+        $this->authorize('update', $printer);
+
         $validated = $request->validate([
-            'working_hours_at_maintenance' => 'required|integer|min:' . $printer->total_working_hours,
+            'working_hours_at_maintenance' => 'required|integer|min:'.$printer->total_working_hours,
             'lubricated' => 'required|boolean',
         ]);
 
@@ -96,7 +109,7 @@ class PrinterController extends Controller
 
         $hoursPrintedThisMonth = $validated['working_hours_at_maintenance'] - $printer->total_working_hours;
 
-        $maintenance = \App\Models\PrinterMaintenance::where('printer_id', $printer->id)
+        $maintenance = PrinterMaintenance::where('printer_id', $printer->id)
             ->where('maintenance_month', $targetMonth->format('Y-m-d'))
             ->first();
 
@@ -107,7 +120,7 @@ class PrinterController extends Controller
                 'lubricated' => $validated['lubricated'],
             ]);
         } else {
-            \App\Models\PrinterMaintenance::create([
+            PrinterMaintenance::create([
                 'printer_id' => $printer->id,
                 'maintenance_month' => $targetMonth->format('Y-m-d'),
                 'working_hours_at_maintenance' => $validated['working_hours_at_maintenance'],
@@ -123,14 +136,19 @@ class PrinterController extends Controller
         return back();
     }
 
-    public function destroy(\App\Models\Printer $printer)
+    public function destroy(Printer $printer)
     {
+        $this->authorize('delete', $printer);
+
         $printer->delete();
+
         return back();
     }
 
-    public function updateMaintenance(Request $request, \App\Models\PrinterMaintenance $maintenance)
+    public function updateMaintenance(Request $request, PrinterMaintenance $maintenance)
     {
+        $this->authorize('update', $maintenance->printer);
+
         $validated = $request->validate([
             'maintenance_month' => 'required|date_format:Y-m',
             'working_hours_at_maintenance' => 'required|integer|min:0',
@@ -141,12 +159,16 @@ class PrinterController extends Controller
         $validated['maintenance_month'] .= '-01';
 
         $maintenance->update($validated);
+
         return back();
     }
 
-    public function destroyMaintenance(\App\Models\PrinterMaintenance $maintenance)
+    public function destroyMaintenance(PrinterMaintenance $maintenance)
     {
+        $this->authorize('deleteMaintenance', $maintenance->printer);
+
         $maintenance->delete();
+
         return back();
     }
 }

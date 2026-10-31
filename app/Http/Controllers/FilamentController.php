@@ -11,10 +11,12 @@ class FilamentController extends Controller
     public function index(Request $request)
     {
         $query = Filament::query();
-        
+
         if ($search = $request->input('search')) {
-            $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('brand', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('brand', 'like', "%{$search}%");
+            });
         }
         if ($material = $request->input('material')) {
             $query->where('material', $material);
@@ -22,7 +24,7 @@ class FilamentController extends Controller
 
         return Inertia::render('Filaments/Index', [
             'filaments' => $query->latest()->paginate(15)->withQueryString(),
-            'filters' => $request->only(['search', 'material'])
+            'filters' => $request->only(['search', 'material']),
         ]);
     }
 
@@ -46,10 +48,11 @@ class FilamentController extends Controller
             'color_hex' => 'required|string|size:7',
             'price_per_kg' => 'required|numeric|min:0',
             'empty_spool_weight_grams' => 'nullable|numeric|min:0|max:9999',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         Filament::create($validated);
+
         return redirect()->route('filaments.index');
     }
 
@@ -68,45 +71,50 @@ class FilamentController extends Controller
 
         $validated = $request->validate([
             'brand' => 'required|string|max:255',
-            'name' => 'required|string|max:255|unique:filaments,name,' . $filament->id,
+            'name' => 'required|string|max:255|unique:filaments,name,'.$filament->id,
             'material' => 'required|in:pla,petg',
             'color_name' => 'required|string|max:255',
             'color_hex' => 'required|string|size:7',
             'price_per_kg' => 'required|numeric|min:0',
             'empty_spool_weight_grams' => 'nullable|numeric|min:0|max:9999',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
         ]);
 
         $filament->update($validated);
+
         return redirect()->route('filaments.index');
     }
 
     public function destroy(Filament $filament)
     {
         $this->authorize('delete', $filament);
-        
+
         if ($filament->products()->exists()) {
-            return back()->with('error', 'Cannot delete filament. It is linked to ' . $filament->products()->count() . ' products.');
+            return back()->with('error', 'Cannot delete filament. It is linked to '.$filament->products()->count().' products.');
         }
 
         $filament->delete();
+
         return redirect()->route('filaments.index');
     }
 
     public function stock()
     {
         return Inertia::render('Filaments/Stock', [
-            'filaments' => Filament::orderBy('brand')->orderBy('name')->get()
+            'filaments' => Filament::orderBy('brand')->orderBy('name')->get(),
         ]);
     }
 
     public function updateStock(Request $request, Filament $filament)
     {
+        $this->authorize('update', $filament);
+
         $validated = $request->validate([
             'stock_rolls' => 'required|integer|min:0',
         ]);
 
         $filament->update($validated);
+
         return back()->with('success', 'Stock updated successfully.');
     }
 }

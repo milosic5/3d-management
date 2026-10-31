@@ -20,7 +20,7 @@
             </DropdownMenuContent>
         </DropdownMenu>
 
-        <Link :href="route('products.trash')">
+        <Link v-if="$page.props.auth.can.manageProductTrash" :href="route('products.trash')">
             <Button variant="outline" class="mr-2"><TrashIcon class="w-4 h-4 mr-2" /> {{ $t('products.trash') }}</Button>
         </Link>
         <Link :href="route('products.create')">
@@ -55,7 +55,7 @@
 
 <script setup>
 import { ref, h } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import PageHeader from '@/Components/PageHeader.vue'
 import DataTable from '@/Components/DataTable.vue'
@@ -71,6 +71,7 @@ import { useI18n } from 'vue-i18n'
 const props = defineProps({ products: Object, filters: Object })
 const { form } = useFilters(props.filters)
 const { t } = useI18n()
+const page = usePage()
 
 const onSort = ({ key, dir }) => {
     form.value.sort = key;
@@ -139,7 +140,9 @@ const columns = [
     id: 'actions',
     cell: ({ row }) => h('div', { class: 'flex items-center space-x-2' }, [
         h(Link, { href: route('products.edit', row.original.id) }, () => h(Button, { variant: 'ghost', size: 'icon' }, () => h(PencilIcon, { class: 'w-4 h-4 text-slate-500' }))),
-        h(Button, { variant: 'ghost', size: 'icon', onClick: () => confirmDelete(row.original) }, () => h(TrashIcon, { class: 'w-4 h-4 text-red-500' }))
+        page.props.auth.can.deleteProducts
+            ? h(Button, { variant: 'ghost', size: 'icon', onClick: () => confirmDelete(row.original) }, () => h(TrashIcon, { class: 'w-4 h-4 text-red-500' }))
+            : null
     ])
   }
 ]

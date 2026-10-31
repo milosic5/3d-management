@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Printer extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'name',
         'total_working_hours',
@@ -35,8 +38,8 @@ class Printer extends Model
         } else {
             $targetMonth = $now->copy()->startOfMonth();
         }
-        
-        return !$this->maintenances()->where('maintenance_month', $targetMonth->format('Y-m-d'))->exists();
+
+        return ! $this->maintenances()->where('maintenance_month', $targetMonth->format('Y-m-d'))->exists();
     }
 
     public function nozzleChanges()
