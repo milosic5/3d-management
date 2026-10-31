@@ -1,0 +1,1 @@
+import{a as e,b as t}from"./index.esm-BBnmvhms.js";function n(){let n=e(),r=t(()=>n.props.enums?.orderStatuses??[]),i=t(()=>n.props.enums?.materials??[]);return{orderStatuses:r,materials:i,statusColor:e=>r.value.find(t=>t.value===e)?.color??``,material:e=>i.value.find(t=>t.value===e?.toLowerCase())}}export{n as t};
