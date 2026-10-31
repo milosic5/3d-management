@@ -6,33 +6,15 @@ use App\Models\Investment;
 use App\Models\Order;
 use App\Models\Product;
 use App\Support\Sql;
-use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class DashboardService
 {
-    protected function getDateRange($period)
-    {
-        $now = Carbon::now();
-        if (preg_match('/^\d{4}-\d{2}$/', $period)) {
-            $date = Carbon::createFromFormat('Y-m', $period);
-
-            return [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()];
-        }
-
-        return match ($period) {
-            'this_month' => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()],
-            'last_month' => [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth()],
-            'this_year' => [$now->copy()->startOfYear(), $now->copy()->endOfYear()],
-            'last_year' => [$now->copy()->subYear()->startOfYear(), $now->copy()->subYear()->endOfYear()],
-            default => [Carbon::create(2000, 1, 1), $now->copy()->endOfDay()], // all_time
-        };
-    }
+    public function __construct(private FinanceReportService $finance) {}
 
     public function getKpis($period)
     {
-        [$start, $end] = $this->getDateRange($period);
+        [$start, $end] = $this->finance->dateRange($period);
         $revenue = Order::where('status', 'delivered')->whereBetween('created_at', [$start, $end])->sum('total_price');
         $costs = Investment::whereBetween('invested_at', [$start, $end])->sum('amount');
         $profit = $revenue - $costs;
@@ -55,37 +37,12 @@ class DashboardService
 
     public function getRevenueVsCostsByMonth($period)
     {
-        [$start, $end] = $this->getDateRange($period);
-
-        $revenue = DB::table('orders')
-            ->whereNull('orders.deleted_at')
-            ->select(DB::raw(Sql::yearMonth('created_at').' as month'), DB::raw('SUM(total_price) as revenue'))
-            ->where('status', 'delivered')
-            ->whereBetween('created_at', [$start, $end])
-            ->groupByRaw(Sql::yearMonth('created_at'))
-            ->orderBy('month')
-            ->get()->keyBy('month');
-
-        $costs = DB::table('investments')
-            ->select(DB::raw(Sql::yearMonth('invested_at').' as month'), DB::raw('SUM(amount) as costs'))
-            ->whereBetween('invested_at', [$start, $end])
-            ->groupByRaw(Sql::yearMonth('invested_at'))
-            ->orderBy('month')
-            ->get()->keyBy('month');
-
-        $months = collect($revenue->keys())->merge($costs->keys())->unique()->sort()->values();
-
-        return $months->map(fn ($m) => [
-            'month' => $m,
-            'revenue' => (float) ($revenue[$m]->revenue ?? 0),
-            'costs' => (float) ($costs[$m]->costs ?? 0),
-            'profit' => (float) ($revenue[$m]->revenue ?? 0) - (float) ($costs[$m]->costs ?? 0),
-        ])->values()->toArray();
+        return $this->finance->revenueVsCosts(...$this->finance->dateRange($period));
     }
 
     public function getCostsByCategory($period)
     {
-        [$start, $end] = $this->getDateRange($period);
+        [$start, $end] = $this->finance->dateRange($period);
 
         return Investment::join('investment_categories', 'investments.category_id', '=', 'investment_categories.id')
             ->select('investment_categories.name', DB::raw('SUM(investments.amount) as total'))
@@ -97,7 +54,7 @@ class DashboardService
 
     public function getRevenueByProduct($period)
     {
-        [$start, $end] = $this->getDateRange($period);
+        [$start, $end] = $this->finance->dateRange($period);
         $rows = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->whereNull('orders.deleted_at')
@@ -110,7 +67,7 @@ class DashboardService
             ->get()
             ->toArray();
 
-        return $this->groupCepovi($rows, 'revenue')
+        return $this->finance->groupCepovi($rows)
             ->sortByDesc('revenue')
             ->take(8)
             ->values()
@@ -119,7 +76,7 @@ class DashboardService
 
     public function getProfitabilityTimeline($period)
     {
-        [$start, $end] = $this->getDateRange($period);
+        [$start, $end] = $this->finance->dateRange($period);
 
         return DB::table('orders')
             ->whereNull('orders.deleted_at')
@@ -196,54 +153,9 @@ class DashboardService
             ->get()
             ->toArray();
 
-        return $this->groupCepovi($rows, 'revenue')
+        return $this->finance->groupCepovi($rows)
             ->sortByDesc('revenue')
             ->take(5)
             ->values();
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Merge all rows whose name contains "cep" or "čep" (case-insensitive)
-     * into a single "Cepovi" entry, summing numeric columns.
-     */
-    private function groupCepovi(array $rows, string ...$sumKeys): Collection
-    {
-        $cepPattern = '/[čc]ep/iu';
-
-        $grouped = collect($rows)->groupBy(function ($row) use ($cepPattern) {
-            $name = is_array($row) ? $row['name'] : $row->name;
-
-            return preg_match($cepPattern, $name) ? '__cepovi__' : $name;
-        });
-
-        return $grouped->map(function ($items, $key) {
-            $first = (array) $items->first();
-
-            if ($key !== '__cepovi__') {
-                return $first;
-            }
-
-            // Sum all numeric fields; average the avg_price field
-            $summed = $first;
-            $summed['name'] = 'Cepovi';
-            $summed['color_hex'] = '#f97316';
-
-            foreach ($first as $col => $val) {
-                if ($col === 'name' || $col === 'color_hex') {
-                    continue;
-                }
-                if (is_numeric($val)) {
-                    $summed[$col] = $items->sum(fn ($i) => (float) ((array) $i)[$col]);
-                }
-            }
-
-            if (array_key_exists('avg_price', $summed)) {
-                $summed['avg_price'] = $items->avg(fn ($i) => (float) ((array) $i)['avg_price']);
-            }
-
-            return $summed;
-        })->values();
     }
 }

@@ -2,25 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
-use App\Models\Product;
+use App\Services\FinanceReportService;
 use App\Support\Sql;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AnalyticsController extends Controller
 {
+    public function __construct(private FinanceReportService $finance) {}
+
     public function index(Request $request): Response
     {
         $period = $request->query('period', 'this_year');
-        [$start, $end] = $this->getDateRange($period);
+        [$start, $end] = $this->finance->dateRange($period);
 
         return Inertia::render('Analytics/Index', [
-            'revenueVsCosts' => $this->getRevenueVsCosts($start, $end),
+            'revenueVsCosts' => $this->finance->revenueVsCosts($start, $end),
             'topCustomers' => $this->getTopCustomers($start, $end),
             'materialBreakdown' => $this->getMaterialBreakdown($start, $end),
             'productProfitability' => $this->getProductProfitability($start, $end),
@@ -30,60 +30,6 @@ class AnalyticsController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-
-    private function getDateRange(string $period): array
-    {
-        $now = Carbon::now();
-        if (preg_match('/^\d{4}-\d{2}$/', $period)) {
-            $date = Carbon::createFromFormat('Y-m', $period);
-
-            return [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()];
-        }
-
-        return match ($period) {
-            'this_month' => [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()],
-            'last_month' => [$now->copy()->subMonth()->startOfMonth(), $now->copy()->subMonth()->endOfMonth()],
-            'this_year' => [$now->copy()->startOfYear(), $now->copy()->endOfYear()],
-            'last_year' => [$now->copy()->subYear()->startOfYear(), $now->copy()->subYear()->endOfYear()],
-            default => [Carbon::create(2000, 1, 1), $now->copy()->endOfDay()],
-        };
-    }
-
-    /**
-     * Monthly revenue (delivered orders) vs costs (investments) for bar/line chart.
-     */
-    private function getRevenueVsCosts(Carbon $start, Carbon $end): array
-    {
-        // Revenue per month
-        $revenue = DB::table('orders')
-            ->whereNull('orders.deleted_at')
-            ->select(DB::raw(Sql::yearMonth('created_at').' as month'), DB::raw('SUM(total_price) as revenue'))
-            ->where('status', 'delivered')
-            ->whereBetween('created_at', [$start, $end])
-            ->groupByRaw(Sql::yearMonth('created_at'))
-            ->orderBy('month')
-            ->get()
-            ->keyBy('month');
-
-        // Costs per month
-        $costs = DB::table('investments')
-            ->select(DB::raw(Sql::yearMonth('invested_at').' as month'), DB::raw('SUM(amount) as costs'))
-            ->whereBetween('invested_at', [$start, $end])
-            ->groupByRaw(Sql::yearMonth('invested_at'))
-            ->orderBy('month')
-            ->get()
-            ->keyBy('month');
-
-        // Merge months
-        $months = collect($revenue->keys())->merge($costs->keys())->unique()->sort()->values();
-
-        return $months->map(fn ($m) => [
-            'month' => $m,
-            'revenue' => (float) ($revenue[$m]->revenue ?? 0),
-            'costs' => (float) ($costs[$m]->costs ?? 0),
-            'profit' => (float) ($revenue[$m]->revenue ?? 0) - (float) ($costs[$m]->costs ?? 0),
-        ])->values()->toArray();
-    }
 
     /**
      * Top customers by total spend (delivered orders only).
@@ -109,22 +55,29 @@ class AnalyticsController extends Controller
 
     /**
      * Revenue breakdown by material (PLA vs PETG etc.).
+     *
+     * Material comes from the filament printed on the order item; older items without one
+     * fall back to the product's filament, then the legacy products.material. Unknown → null.
      */
     private function getMaterialBreakdown(Carbon $start, Carbon $end): array
     {
+        $material = 'COALESCE(item_filaments.material, product_filaments.material, products.material)';
+
         return DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->whereNull('orders.deleted_at')
             ->join('products', 'order_items.product_id', '=', 'products.id')
+            ->leftJoin('filaments as item_filaments', 'order_items.filament_id', '=', 'item_filaments.id')
+            ->leftJoin('filaments as product_filaments', 'products.filament_id', '=', 'product_filaments.id')
             ->select(
-                'products.material',
+                DB::raw("{$material} as material"),
                 DB::raw('SUM(order_items.unit_price * order_items.quantity) as revenue'),
                 DB::raw('SUM(order_items.weight_grams) as total_grams'),
                 DB::raw('COUNT(DISTINCT orders.id) as order_count')
             )
             ->where('orders.status', 'delivered')
             ->whereBetween('orders.created_at', [$start, $end])
-            ->groupBy('products.material')
+            ->groupByRaw($material)
             ->orderByDesc('revenue')
             ->get()
             ->toArray();
@@ -162,7 +115,7 @@ class AnalyticsController extends Controller
             ->get()
             ->toArray();
 
-        return $this->groupCepovi($rows)
+        return $this->finance->groupCepovi($rows)
             ->sortByDesc('revenue')
             ->take(15)
             ->map(function ($row) {
@@ -199,48 +152,5 @@ class AnalyticsController extends Controller
             ->orderBy('month')
             ->get()
             ->toArray();
-    }
-
-    /**
-     * Merge all rows whose name contains "cep" or "čep" (case-insensitive)
-     * into a single "Cepovi" entry, summing numeric columns.
-     */
-    private function groupCepovi(array $rows): Collection
-    {
-        $cepPattern = '/[čc]ep/iu';
-
-        $grouped = collect($rows)->groupBy(function ($row) use ($cepPattern) {
-            $name = is_array($row) ? $row['name'] : $row->name;
-
-            return preg_match($cepPattern, $name) ? '__cepovi__' : $name;
-        });
-
-        return $grouped->map(function ($items, $key) {
-            $first = (array) $items->first();
-
-            if ($key !== '__cepovi__') {
-                return $first;
-            }
-
-            // Sum all numeric fields; average the avg_price field if exists
-            $summed = $first;
-            $summed['name'] = 'Cepovi';
-            $summed['color_hex'] = '#f97316';
-
-            foreach ($first as $col => $val) {
-                if ($col === 'name' || $col === 'color_hex' || $col === 'id') {
-                    continue;
-                }
-                if (is_numeric($val)) {
-                    $summed[$col] = $items->sum(fn ($i) => (float) ((array) $i)[$col]);
-                }
-            }
-
-            if (array_key_exists('avg_price', $summed)) {
-                $summed['avg_price'] = $items->avg(fn ($i) => (float) ((array) $i)['avg_price']);
-            }
-
-            return $summed;
-        })->values();
     }
 }

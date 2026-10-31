@@ -338,7 +338,8 @@
     "breadcrumb": "Napredna analitika",
     "coming_soon": "Napredno izveštavanje uskoro",
     "coming_soon_desc": "Naše osnovne analitike se trenutno prikazuju direktno na kontrolnoj tabli. Buduće verzije uključivaće dubinsko mapiranje korisničkog puta i algoritme efikasnosti materijala.",
-    "return_btn": "Povratak na kontrolnu tablu"
+    "return_btn": "Povratak na kontrolnu tablu",
+    "material_unknown": "Nepoznato"
   },
   "packagings": {
     "title": "Ambalaža",

@@ -238,7 +238,7 @@ const lineOptions = {
 
 // ── Material Breakdown Doughnut ─────────────────────────────────────────────
 const materialChartData = computed(() => ({
-    labels: props.materialBreakdown.map(d => (d.material || 'Unknown').toUpperCase()),
+    labels: props.materialBreakdown.map(d => d.material ? d.material.toUpperCase() : t('analytics.material_unknown')),
     datasets: [{
         data: props.materialBreakdown.map(d => d.revenue),
         backgroundColor: ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#64748b'],

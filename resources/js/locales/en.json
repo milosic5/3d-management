@@ -337,7 +337,8 @@
     "breadcrumb": "Advanced Analytics",
     "coming_soon": "Advanced Reporting Coming Soon",
     "coming_soon_desc": "Our core analytics are currently served directly from the primary Dashboard. Future iterations will include deep customer journey mapping and material efficiency algorithms here.",
-    "return_btn": "Return to Dashboard"
+    "return_btn": "Return to Dashboard",
+    "material_unknown": "Unknown"
   },
   "packagings": {
     "title": "Packaging",
