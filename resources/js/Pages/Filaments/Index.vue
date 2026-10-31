@@ -14,8 +14,7 @@
         <template #filters>
             <select v-model="form.material" class="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
                 <option value="">{{ $t('filaments.all_materials') }}</option>
-                <option value="pla">PLA</option>
-                <option value="petg">PETG</option>
+                <option v-for="m in materials" :key="m.value" :value="m.value">{{ m.label }}</option>
             </select>
         </template>
     </DataTable>
@@ -41,6 +40,7 @@ import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import { Button } from '@/Components/ui/button'
 import { PlusIcon, PencilIcon, TrashIcon } from 'lucide-vue-next'
 import { useFilters } from '@/composables/useFilters'
+import { useEnums } from '@/composables/useEnums'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 
@@ -48,6 +48,7 @@ const props = defineProps({ filaments: Object, filters: Object })
 const { form } = useFilters(props.filters)
 const page = usePage()
 const { t } = useI18n()
+const { materials } = useEnums()
 
 const isDeleteDialogOpen = ref(false)
 const targetItem = ref(null)

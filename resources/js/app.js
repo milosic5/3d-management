@@ -1,13 +1,23 @@
 import '../css/app.css';
 import './bootstrap';
 
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { i18n } from './i18n';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+// Updated from the shared "appName" prop (Settings → app name) on every visit.
+let appName = import.meta.env.VITE_APP_NAME || '3D PrintShop';
+
+const applySharedProps = (props) => {
+    if (props.appName) {
+        appName = props.appName;
+    }
+    if (props.locale) {
+        i18n.global.locale.value = props.locale;
+    }
+};
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -17,6 +27,9 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
+        applySharedProps(props.initialPage.props);
+        router.on('navigate', (event) => applySharedProps(event.detail.page.props));
+
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)

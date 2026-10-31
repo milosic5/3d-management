@@ -29,11 +29,12 @@
             </div>
 
             <div v-if="isFilamentCategory" class="animate-in fade-in slide-in-from-top-1 duration-200">
-                <label class="block text-sm font-medium mb-1">Filament</label>
-                <select v-if="filaments.length > 0" v-model="selectedFilamentName" class="w-full h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
-                    <option value="">-- {{ $t('common.select', 'Izaberite') }} --</option>
-                    <option v-for="f in filaments" :key="f.name" :value="f.name">{{ f.name }}</option>
+                <label class="block text-sm font-medium mb-1">{{ $t('orders.filament') }}</label>
+                <select v-if="filaments.length > 0" v-model="form.filament_id" class="w-full h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
+                    <option :value="null">-- {{ $t('common.select', 'Izaberite') }} --</option>
+                    <option v-for="f in filaments" :key="f.id" :value="f.id">{{ f.brand }} - {{ f.name }} ({{ f.color_name }})</option>
                 </select>
+                <div class="text-red-500 text-sm mt-1" v-if="form.errors.filament_id">{{ form.errors.filament_id }}</div>
                 <p v-else class="text-xs text-amber-500 mt-1 italic">{{ $t('filaments.no_results', 'Nema pronađenih filamenata') }}</p>
             </div>
 
@@ -75,7 +76,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useForm, Link } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
@@ -96,6 +97,7 @@ const unitLabel = computed(() => locale.value === 'sr' ? 'kom' : 'pcs')
 const form = useForm({
     name: '',
     category_id: '',
+    filament_id: null,
     invested_at: new Date().toISOString().slice(0, 10),
     unit_cost: null,
     quantity: 1,
@@ -109,27 +111,24 @@ const submit = () => {
     form.post(route('investments.store'))
 }
 
-const selectedFilamentName = ref('')
-
 const isFilamentCategory = computed(() => {
     if (!form.category_id) return false;
     const cat = props.categories.find(c => String(c.id) == String(form.category_id));
     return cat && (cat.name.toLowerCase().includes('filamen') || cat.id == 2);
 });
 
-watch(selectedFilamentName, (newName) => {
-    if (newName) {
-        const filament = props.filaments.find(f => f.name === newName);
-        if (filament) {
-            form.name = filament.name;
-            form.unit_cost = filament.price_per_kg;
-        }
+// Picking a filament pre-fills the name and its current price per kg.
+watch(() => form.filament_id, (id) => {
+    const filament = props.filaments.find(f => f.id === id);
+    if (filament) {
+        form.name = filament.name;
+        form.unit_cost = filament.price_per_kg;
     }
 });
 
-watch(() => form.category_id, (newId) => {
+watch(() => form.category_id, () => {
     if (!isFilamentCategory.value) {
-        selectedFilamentName.value = '';
+        form.filament_id = null;
     }
 });
 </script>

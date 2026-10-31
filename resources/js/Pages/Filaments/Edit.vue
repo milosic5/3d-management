@@ -36,8 +36,7 @@
             <div>
                 <label class="block text-sm font-medium mb-1">{{ $t('filaments.material') }} *</label>
                 <select v-model="form.material" required class="w-full h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
-                    <option value="pla">PLA</option>
-                    <option value="petg">PETG</option>
+                    <option v-for="m in materials" :key="m.value" :value="m.value">{{ m.label }}</option>
                 </select>
                 <div class="text-red-500 text-sm mt-1" v-if="form.errors.material">{{ form.errors.material }}</div>
             </div>
@@ -101,7 +100,10 @@ import { Button } from '@/Components/ui/button'
 import { Input } from '@/Components/ui/input'
 import { Textarea } from '@/Components/ui/textarea'
 import ColorPickerGrid from '@/Components/ColorPickerGrid.vue'
+import { useEnums } from '@/composables/useEnums'
 import { watch } from 'vue'
+
+const { materials } = useEnums()
 
 const props = defineProps({ 
     filament: Object,

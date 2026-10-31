@@ -23,8 +23,6 @@ class Printer extends Model
         'last_nozzle_working_hours' => 'integer',
     ];
 
-    protected $appends = ['current_nozzle_hours', 'needs_maintenance'];
-
     public function getCurrentNozzleHoursAttribute()
     {
         return max(0, $this->total_working_hours - $this->last_nozzle_working_hours);
@@ -39,7 +37,14 @@ class Printer extends Model
             $targetMonth = $now->copy()->startOfMonth();
         }
 
-        return ! $this->maintenances()->where('maintenance_month', $targetMonth->format('Y-m-d'))->exists();
+        // Avoid a query per printer when the maintenances were eager loaded.
+        if ($this->relationLoaded('maintenances')) {
+            return ! $this->maintenances->contains(
+                fn (PrinterMaintenance $maintenance) => $maintenance->maintenance_month->isSameDay($targetMonth)
+            );
+        }
+
+        return ! $this->maintenances()->whereDate('maintenance_month', $targetMonth->format('Y-m-d'))->exists();
     }
 
     public function nozzleChanges()

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderHistory;
 use App\Models\Product;
@@ -35,9 +36,9 @@ it('logs the real previous status when a full order update changes it', function
     $history = OrderHistory::where('order_id', $order->id)->orderBy('id')->get();
 
     expect($history->pluck('action')->all())->toBe(['updated', 'status_changed'])
-        ->and($history[0]->from_status)->toBe('received')
-        ->and($history[1]->from_status)->toBe('received')
-        ->and($history[1]->to_status)->toBe('printing');
+        ->and($history[0]->from_status)->toBe(OrderStatus::Received)
+        ->and($history[1]->from_status)->toBe(OrderStatus::Received)
+        ->and($history[1]->to_status)->toBe(OrderStatus::Printing);
 });
 
 it('does not log a status change when a full order update keeps the status', function () {
@@ -50,6 +51,6 @@ it('does not log a status change when a full order update keeps the status', fun
     $history = OrderHistory::where('order_id', $order->id)->get();
 
     expect($history->pluck('action')->all())->toBe(['updated'])
-        ->and($history[0]->from_status)->toBe('printing')
-        ->and($history[0]->to_status)->toBe('printing');
+        ->and($history[0]->from_status)->toBe(OrderStatus::Printing)
+        ->and($history[0]->to_status)->toBe(OrderStatus::Printing);
 });

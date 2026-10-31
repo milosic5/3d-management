@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\OrderStatus;
 use App\Models\Investment;
 use App\Models\Order;
 use App\Models\Product;
@@ -15,13 +16,25 @@ class DashboardService
     public function getKpis($period)
     {
         [$start, $end] = $this->finance->dateRange($period);
-        $revenue = Order::where('status', 'delivered')->whereBetween('created_at', [$start, $end])->sum('total_price');
+        $delivered = OrderStatus::Delivered->value;
+        $active = array_map(fn (OrderStatus $status) => $status->value, OrderStatus::active());
+
+        // One pass over orders (soft-deleted excluded by the model scope); active orders ignore the period.
+        $orders = Order::query()->toBase()->selectRaw(
+            'SUM(CASE WHEN status = ? AND created_at BETWEEN ? AND ? THEN total_price ELSE 0 END) AS revenue, '.
+            'SUM(CASE WHEN status = ? AND created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) AS delivered_count, '.
+            'SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END) AS total_orders, '.
+            'SUM(CASE WHEN status IN ('.implode(', ', array_fill(0, count($active), '?')).') THEN 1 ELSE 0 END) AS active_orders',
+            [$delivered, $start, $end, $delivered, $start, $end, $start, $end, ...$active],
+        )->first();
+
+        $revenue = $orders->revenue ?: 0;
         $costs = Investment::whereBetween('invested_at', [$start, $end])->sum('amount');
         $profit = $revenue - $costs;
         $margin = $revenue > 0 ? round(($profit / $revenue) * 100, 1) : 0;
-        $activeOrders = Order::whereIn('status', ['received', 'printing'])->count();
-        $deliveredCount = Order::where('status', 'delivered')->whereBetween('created_at', [$start, $end])->count();
-        $totalOrders = Order::whereBetween('created_at', [$start, $end])->count();
+        $activeOrders = (int) $orders->active_orders;
+        $deliveredCount = (int) $orders->delivered_count;
+        $totalOrders = (int) $orders->total_orders;
         $avgOrderValue = $deliveredCount > 0 ? round($revenue / $deliveredCount, 2) : 0;
 
         return [
@@ -60,7 +73,7 @@ class DashboardService
             ->whereNull('orders.deleted_at')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->select('products.name', 'products.color_hex', DB::raw('SUM(order_items.unit_price * order_items.quantity) as revenue'))
-            ->where('orders.status', 'delivered')
+            ->where('orders.status', OrderStatus::Delivered)
             ->whereBetween('orders.created_at', [$start, $end])
             ->groupBy('products.id', 'products.name', 'products.color_hex')
             ->orderByDesc('revenue')
@@ -85,7 +98,7 @@ class DashboardService
                 DB::raw('SUM(total_price) as revenue'),
                 DB::raw('COUNT(*) as orders')
             )
-            ->where('status', 'delivered')
+            ->where('status', OrderStatus::Delivered)
             ->whereBetween('created_at', [$start, $end])
             ->groupByRaw(Sql::yearMonth('created_at'))
             ->orderBy('month')
@@ -101,14 +114,14 @@ class DashboardService
         $deliveredItems = DB::table('order_items')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->whereNull('orders.deleted_at')
-            ->where('orders.status', 'delivered')
+            ->where('orders.status', OrderStatus::Delivered)
             ->select(
                 DB::raw('COUNT(DISTINCT orders.id) as total_prints'),
                 DB::raw('SUM(order_items.print_time_minutes) as total_minutes'),
                 DB::raw('SUM(order_items.weight_grams) as total_grams')
             )->first();
 
-        $queueMinutes = Order::whereIn('status', ['received', 'printing'])->sum('estimated_print_minutes');
+        $queueMinutes = Order::whereIn('status', OrderStatus::active())->sum('estimated_print_minutes');
 
         return [
             'totalProducts' => $activeProducts,
@@ -147,7 +160,7 @@ class DashboardService
                 DB::raw('AVG(order_items.unit_price) as avg_price'),
                 DB::raw('SUM(order_items.print_time_minutes) / 60 as print_hours')
             )
-            ->where('orders.status', 'delivered')
+            ->where('orders.status', OrderStatus::Delivered)
             ->groupBy('products.id', 'products.name', 'products.color_hex')
             ->orderByDesc('revenue')
             ->get()

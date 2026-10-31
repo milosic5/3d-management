@@ -2,13 +2,17 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\FilamentMaterial;
+use App\Enums\OrderStatus;
 use App\Models\Calibration;
 use App\Models\Filament;
 use App\Models\Order;
 use App\Models\Packaging;
 use App\Models\Printer;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\User;
+use App\Support\NavigationNotifications;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,28 +42,7 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
-        $notifications = [];
-
-        if ($user) {
-            // Active orders (received + printing)
-            $activeOrdersCount = Order::whereIn('status', ['received', 'printing'])->count();
-
-            // Filaments with stock = 0
-            $emptyFilamentsCount = Filament::where('stock_rolls', 0)->count();
-
-            // Printers: nozzle > 500h or needs maintenance
-            $printers = Printer::with('maintenances')->get();
-            $printerWarnings = $printers->filter(function ($printer) {
-                return $printer->needs_maintenance || $printer->current_nozzle_hours > 500;
-            })->count();
-
-            $notifications = [
-                'activeOrders' => $activeOrdersCount,
-                'emptyFilaments' => $emptyFilamentsCount,
-                'printerWarnings' => $printerWarnings,
-                'total' => ($activeOrdersCount > 0 ? 1 : 0) + ($emptyFilamentsCount > 0 ? 1 : 0) + ($printerWarnings > 0 ? 1 : 0),
-            ];
-        }
+        $notifications = $user ? NavigationNotifications::get() : [];
 
         return [
             ...parent::share($request),
@@ -69,6 +52,13 @@ class HandleInertiaRequests extends Middleware
                 'can' => $user ? $this->abilities($user) : [],
             ],
             'notifications' => $notifications,
+            'appName' => fn () => Setting::appName(),
+            // Lazy: SetLocale runs after this middleware, so resolve the locale at render time.
+            'locale' => fn () => app()->getLocale(),
+            'enums' => [
+                'orderStatuses' => OrderStatus::options(),
+                'materials' => FilamentMaterial::options(),
+            ],
         ];
     }
 

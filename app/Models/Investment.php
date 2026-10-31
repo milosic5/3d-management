@@ -11,7 +11,7 @@ class Investment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'category_id', 'name', 'amount', 'quantity', 'unit',
+        'category_id', 'filament_id', 'name', 'amount', 'quantity', 'unit',
         'unit_cost', 'invested_at', 'notes', 'created_by',
     ];
 
@@ -35,22 +35,42 @@ class Investment extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function filament(): BelongsTo
+    {
+        return $this->belongsTo(Filament::class);
+    }
+
+    /**
+     * A filament's price per kg follows the unit cost of its latest purchase.
+     */
+    public static function syncFilamentPrice(?int $filamentId): void
+    {
+        $filament = $filamentId ? Filament::find($filamentId) : null;
+        if (! $filament) {
+            return;
+        }
+
+        $latest = self::where('filament_id', $filament->id)
+            ->latest('invested_at')
+            ->first();
+
+        if ($latest && $latest->unit_cost > 0) {
+            $filament->updateQuietly(['price_per_kg' => $latest->unit_cost]);
+        }
+    }
+
     protected static function booted()
     {
-        $updateFilamentPrice = function (Investment $investment) {
-            $filament = Filament::where('name', $investment->name)->first();
-            if ($filament) {
-                $latest = self::where('name', $filament->name)
-                    ->latest('invested_at')
-                    ->first();
+        static::saved(function (Investment $investment) {
+            self::syncFilamentPrice($investment->filament_id);
 
-                if ($latest && $latest->unit_cost > 0) {
-                    $filament->updateQuietly(['price_per_kg' => $latest->unit_cost]);
-                }
+            // Moved to another filament: the previous one falls back to its own latest purchase.
+            $previous = $investment->getOriginal('filament_id');
+            if ($previous && $previous !== $investment->filament_id) {
+                self::syncFilamentPrice($previous);
             }
-        };
+        });
 
-        static::saved($updateFilamentPrice);
-        static::deleted($updateFilamentPrice);
+        static::deleted(fn (Investment $investment) => self::syncFilamentPrice($investment->filament_id));
     }
 }

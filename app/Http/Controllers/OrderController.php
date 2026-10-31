@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
+use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\UpdateOrderRequest;
 use App\Models\Filament;
 use App\Models\Order;
 use App\Models\OrderHistory;
@@ -26,12 +29,12 @@ class OrderController extends Controller
             });
         }
         if ($request->boolean('show_cancelled')) {
-            $query->where('status', 'cancelled');
+            $query->where('status', OrderStatus::Cancelled);
         } else {
             if ($status = $request->input('status')) {
                 $query->where('status', $status);
             } else {
-                $query->where('status', '!=', 'cancelled');
+                $query->where('status', '!=', OrderStatus::Cancelled);
             }
         }
         if ($productId = $request->input('product_id')) {
@@ -85,11 +88,9 @@ class OrderController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreOrderRequest $request)
     {
-        $this->authorize('create', Order::class);
-
-        $validated = $this->validateOrderRequest($request);
+        $validated = $request->validated();
 
         DB::transaction(function () use ($validated, $request) {
             $order = Order::create([
@@ -141,21 +142,20 @@ class OrderController extends Controller
         ]);
     }
 
-    public function update(Request $request, Order $order)
+    public function update(UpdateOrderRequest $request, Order $order)
     {
-        $this->authorize('update', $order);
+        $validated = $request->validated();
+        $newStatus = $request->enum('status', OrderStatus::class);
 
-        if ($request->has('items')) {
-            $validated = $this->validateOrderRequest($request);
-
-            DB::transaction(function () use ($validated, $request, $order) {
+        if ($request->isFullUpdate()) {
+            DB::transaction(function () use ($validated, $newStatus, $request, $order) {
                 // Read before update(): afterwards getOriginal() already returns the new status.
                 $oldStatus = $order->status;
 
                 $order->update([
                     'customer_name' => $validated['customer_name'],
                     'notes' => $validated['notes'],
-                    'status' => $validated['status'],
+                    'status' => $newStatus,
                     'estimated_print_minutes' => $validated['estimated_print_minutes'],
                     'updated_by' => $request->user()->id,
                     'created_at' => $validated['created_at'] ?? $order->created_at,
@@ -176,16 +176,16 @@ class OrderController extends Controller
                     'user_id' => $request->user()->id,
                     'action' => 'updated',
                     'from_status' => $oldStatus,
-                    'to_status' => $validated['status'],
+                    'to_status' => $newStatus,
                 ]);
 
-                if ($oldStatus !== $validated['status']) {
+                if ($oldStatus !== $newStatus) {
                     OrderHistory::create([
                         'order_id' => $order->id,
                         'user_id' => $request->user()->id,
                         'action' => 'status_changed',
                         'from_status' => $oldStatus,
-                        'to_status' => $validated['status'],
+                        'to_status' => $newStatus,
                     ]);
                 }
             });
@@ -193,25 +193,21 @@ class OrderController extends Controller
             return redirect()->route('orders.index');
         }
 
-        $validated = $request->validate([
-            'status' => 'required|in:received,printing,finished,delivered,cancelled',
-        ]);
-
         $oldStatus = $order->status;
 
         $order->update([
-            'status' => $validated['status'],
+            'status' => $newStatus,
             'updated_by' => $request->user()->id,
         ]);
 
         // Log status change
-        if ($oldStatus !== $validated['status']) {
+        if ($oldStatus !== $newStatus) {
             OrderHistory::create([
                 'order_id' => $order->id,
                 'user_id' => $request->user()->id,
                 'action' => 'status_changed',
                 'from_status' => $oldStatus,
-                'to_status' => $validated['status'],
+                'to_status' => $newStatus,
             ]);
         }
 
@@ -258,31 +254,6 @@ class OrderController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
     // Private helpers
     // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Validate the full order request (shared between store and update).
-     */
-    private function validateOrderRequest(Request $request): array
-    {
-        return $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'notes' => 'nullable|string',
-            'status' => 'required|in:received,printing,finished,delivered,cancelled',
-            'estimated_print_minutes' => 'nullable|integer',
-            'created_at' => 'nullable|date',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric',
-            'items.*.filament_id' => 'nullable|exists:filaments,id',
-            'items.*.print_cost' => 'nullable|numeric|min:0',
-            'items.*.print_time_minutes' => 'nullable|integer|min:0',
-            'items.*.color_name' => 'nullable|string',
-            'items.*.color_hex' => 'nullable|string|size:7',
-            'items.*.weight_grams' => 'nullable|numeric|min:0',
-            'items.*.notes' => 'nullable|string',
-        ]);
-    }
 
     /**
      * Persist order items and return [$totalPrice, $totalMinutes].

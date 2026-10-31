@@ -1,58 +1,73 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 3D Management
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Internal app for running a 3D printing business: orders and their history, products (with images and up to two model files), filaments and stock, printers (working hours, nozzle changes, monthly maintenance), packaging stock, investments/costs by category, a dashboard and analytics.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Backend:** Laravel 13, PHP 8.3+, Inertia 2, Sanctum, Ziggy, maatwebsite/excel (Excel export), barryvdh/laravel-dompdf (order PDF), spatie/laravel-backup
+- **Frontend:** Vue 3 (`<script setup>`), Tailwind CSS v3, shadcn-vue components (`resources/js/Components/ui`, built on reka-ui), TanStack Table, Chart.js, vue-i18n (English and Serbian)
+- **Database:** MySQL in production; the test suite runs on in-memory SQLite
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Setup
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env          # then set APP_NAME, APP_URL and the DB_* connection (MySQL)
+php artisan key:generate
+php artisan migrate
+php artisan db:seed           # optional demo data, see below
+php artisan storage:link      # product images and model files live on the public disk
+npm install
+npm run build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+`composer setup` runs most of these steps in one go.
 
-## Contributing
+The demo seeder creates `admin@printshop.local` and `operator1@printshop.local`, both with the password `password`. Change or remove them before using real data.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Everyday commands
 
-## Code of Conduct
+| Command | What it does |
+| --- | --- |
+| `composer dev` | Laravel server, queue listener, log tail (Pail) and Vite dev server together |
+| `npm run build` | Production frontend build into `public/build` |
+| `php artisan migrate` | Apply new migrations |
+| `php artisan test` | Pest test suite (SQLite in memory, no setup needed) |
+| `./vendor/bin/pint` | Format PHP code |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Roles and permissions
 
-## Security Vulnerabilities
+Public registration is disabled; an admin creates users under **Users**.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| | Admin | Operator |
+| --- | --- | --- |
+| Orders: view, create, edit, change status | ✓ | ✓ |
+| Orders: delete (moves to trash) | ✓ | ✓ |
+| Order trash: view, restore, delete permanently | ✓ | — |
+| Products, filaments, printers, maintenance, packaging, calibrations: view, create, edit | ✓ | ✓ |
+| …the same: delete, product trash | ✓ | — |
+| Dashboard | ✓ | ✓ |
+| Analytics, investments, users, settings | ✓ | — |
 
-## License
+Rules live in `app/Policies` (admins pass every check through `Gate::before` in `AppServiceProvider`) and the `role:admin` route middleware. The frontend hides actions using the `auth.can` permissions shared by `HandleInertiaRequests`.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Deleted orders are soft-deleted and are excluded from the dashboard, analytics and Excel export.
+
+## Settings
+
+Admins can set the app name (sidebar, browser title, order PDF) and the default language under **Settings**. A user's language toggle is remembered for their session.
+
+## Backups and scheduler
+
+spatie/laravel-backup is scheduled in `routes/console.php`:
+
+- `backup:clean` daily at 01:30
+- `backup:run` daily at 02:00 (database and files, stored on the `local` disk under `storage/app`)
+
+The scheduler only runs if cron calls Laravel every minute. On the server add:
+
+```cron
+* * * * * cd /path/to/3d-management && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Backups on the same disk do not survive a lost server; consider adding an off-site disk in `config/backup.php`.

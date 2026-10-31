@@ -13,11 +13,9 @@ use App\Http\Controllers\PackagingController;
 use App\Http\Controllers\PrinterController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
-use App\Models\Setting;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', function () {
     return redirect()->route('orders.index');
@@ -75,24 +73,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('investments', InvestmentController::class);
         Route::resource('users', UserController::class);
 
-        Route::get('/settings', function () {
-            return Inertia::render('Settings/Index', [
-                'settings' => Setting::pluck('value', 'key')->toArray(),
-            ]);
-        })->name('settings.index');
-
-        Route::post('/settings', function (Request $request) {
-            $data = $request->validate([
-                'app_name' => 'nullable|string',
-                'default_locale' => 'nullable|string|in:en,sr',
-            ]);
-
-            foreach ($data as $key => $val) {
-                Setting::set($key, $val);
-            }
-
-            return back()->with('success', 'Settings updated.');
-        })->name('settings.store');
+        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [SettingsController::class, 'store'])->name('settings.store');
     });
 });
 

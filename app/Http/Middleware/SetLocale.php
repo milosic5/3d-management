@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Setting;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -15,7 +16,7 @@ class SetLocale
             App::setLocale(session('locale'));
         } else {
             try {
-                $default = \App\Models\Setting::get('default_locale', config('app.locale'));
+                $default = Setting::get('default_locale', config('app.locale'));
                 App::setLocale($default);
             } catch (\Exception $e) {
                 App::setLocale(config('app.locale'));

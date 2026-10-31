@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FilamentMaterial;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,7 @@ class Product extends Model
     protected function casts(): array
     {
         return [
+            'material' => FilamentMaterial::class,
             'is_active' => 'boolean',
             'weight_grams' => 'decimal:2',
             'price' => 'decimal:2',

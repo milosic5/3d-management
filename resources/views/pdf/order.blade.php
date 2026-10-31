@@ -30,11 +30,6 @@
         .totals-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: #64748b; }
         .totals-total { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #ea580c; margin-top: 8px; padding-top: 8px; border-top: 1px solid #fed7aa; font-family: monospace; }
         .status-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
-        .status-received  { background: #f1f5f9; color: #475569; }
-        .status-printing  { background: #dbeafe; color: #1d4ed8; }
-        .status-finished  { background: #fed7aa; color: #c2410c; }
-        .status-delivered { background: #dcfce7; color: #16a34a; }
-        .status-cancelled { background: #fee2e2; color: #dc2626; }
         .footer { text-align: center; font-size: 10px; color: #94a3b8; padding: 16px 32px; border-top: 1px solid #f1f5f9; margin-top: 8px; }
         .notes-box { background: #fafafa; border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px 14px; font-size: 12px; color: #475569; font-style: italic; }
     </style>
@@ -42,7 +37,7 @@
 <body>
     <div class="header">
         <span class="logo-dot"></span>
-        <span class="logo-text">3D PrintShop</span>
+        <span class="logo-text">{{ $appName }}</span>
     </div>
 
     <div class="title-block">
@@ -50,7 +45,10 @@
         <div class="order-meta">
             Generated on {{ now()->format('Y-m-d H:i') }}
             &nbsp;·&nbsp;
-            <span class="status-badge status-{{ $order->status }}">{{ ucfirst($order->status) }}</span>
+            @php
+                [$statusBg, $statusFg] = $order->status->hexColors();
+            @endphp
+            <span class="status-badge" style="background: {{ $statusBg }}; color: {{ $statusFg }};">{{ ucfirst($order->status->value) }}</span>
         </div>
     </div>
 
@@ -105,7 +103,7 @@
                             <div style="font-size:10px;color:#f97316;margin-top:2px">Note: {{ $item->notes }}</div>
                         @endif
                     </td>
-                    <td style="color:#64748b;font-size:11px">{{ strtoupper($item->product?->material ?? '—') }}</td>
+                    <td style="color:#64748b;font-size:11px">{{ $item->product?->material?->label() ?? '—' }}</td>
                     <td class="text-right">{{ $item->quantity }}</td>
                     <td class="text-right mono">{{ number_format((float)$item->unit_price, 2) }}</td>
                     <td class="text-right mono">{{ number_format((float)$item->weight_grams * $item->quantity, 1) }}</td>
@@ -139,7 +137,7 @@
     </div>
 
     <div class="footer">
-        3D PrintShop · {{ $order->order_number }} · Thank you!
+        {{ $appName }} · {{ $order->order_number }} · Thank you!
     </div>
 </body>
 </html>

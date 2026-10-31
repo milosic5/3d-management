@@ -5,13 +5,13 @@ namespace App\Exports;
 use App\Models\Investment;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class InvestmentsExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
+class InvestmentsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
     protected array $filters;
 
@@ -24,13 +24,13 @@ class InvestmentsExport implements FromCollection, WithHeadings, WithMapping, Sh
     {
         $query = Investment::with('category');
 
-        if (!empty($this->filters['category'])) {
+        if (! empty($this->filters['category'])) {
             $query->where('category_id', $this->filters['category']);
         }
-        if (!empty($this->filters['from'])) {
+        if (! empty($this->filters['from'])) {
             $query->whereDate('invested_at', '>=', $this->filters['from']);
         }
-        if (!empty($this->filters['to'])) {
+        if (! empty($this->filters['to'])) {
             $query->whereDate('invested_at', '<=', $this->filters['to']);
         }
 

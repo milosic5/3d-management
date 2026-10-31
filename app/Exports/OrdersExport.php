@@ -2,16 +2,17 @@
 
 namespace App\Exports;
 
+use App\Enums\OrderStatus;
 use App\Models\Order;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class OrdersExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
+class OrdersExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
     protected array $filters;
 
@@ -24,23 +25,23 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping, ShouldA
     {
         $query = Order::with(['items.product', 'creator']);
 
-        if (!empty($this->filters['show_cancelled'])) {
-            $query->where('status', 'cancelled');
+        if (! empty($this->filters['show_cancelled'])) {
+            $query->where('status', OrderStatus::Cancelled);
         } else {
-            if (!empty($this->filters['status'])) {
+            if (! empty($this->filters['status'])) {
                 $query->where('status', $this->filters['status']);
             } else {
-                $query->where('status', '!=', 'cancelled');
+                $query->where('status', '!=', OrderStatus::Cancelled);
             }
         }
 
-        if (!empty($this->filters['product_id'])) {
+        if (! empty($this->filters['product_id'])) {
             $query->whereHas('items', function ($q) {
                 $q->where('product_id', $this->filters['product_id']);
             });
         }
 
-        if (!empty($this->filters['period'])) {
+        if (! empty($this->filters['period'])) {
             $period = $this->filters['period'];
             if ($period === 'today') {
                 $query->whereDate('created_at', now()->today());
@@ -49,10 +50,10 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping, ShouldA
             } elseif ($period === 'last_30_days') {
                 $query->whereDate('created_at', '>=', now()->subDays(30));
             }
-        } elseif (!empty($this->filters['from'])) {
+        } elseif (! empty($this->filters['from'])) {
             $query->whereDate('created_at', '>=', $this->filters['from']);
         }
-        if (empty($this->filters['period']) && !empty($this->filters['to'])) {
+        if (empty($this->filters['period']) && ! empty($this->filters['to'])) {
             $query->whereDate('created_at', '<=', $this->filters['to']);
         }
 
@@ -78,15 +79,15 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping, ShouldA
 
     public function map($order): array
     {
-        $products    = $order->items->map(fn($i) => $i->product?->name ?? '—')->implode(', ');
-        $totalQty    = $order->items->sum('quantity');
-        $totalGrams  = $order->items->sum(fn($i) => $i->weight_grams * $i->quantity);
-        $totalMins   = $order->items->sum(fn($i) => ($i->print_time_minutes ?? 0) * $i->quantity);
+        $products = $order->items->map(fn ($i) => $i->product?->name ?? '—')->implode(', ');
+        $totalQty = $order->items->sum('quantity');
+        $totalGrams = $order->items->sum(fn ($i) => $i->weight_grams * $i->quantity);
+        $totalMins = $order->items->sum(fn ($i) => ($i->print_time_minutes ?? 0) * $i->quantity);
 
         return [
             $order->order_number,
             $order->customer_name,
-            strtoupper($order->status),
+            strtoupper($order->status->value),
             $products,
             $totalQty,
             number_format((float) $order->total_price, 2),

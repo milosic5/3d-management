@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\OrderStatus;
 use App\Services\FinanceReportService;
 use App\Support\Sql;
 use Carbon\Carbon;
@@ -44,7 +45,7 @@ class AnalyticsController extends Controller
                 DB::raw('SUM(total_price) as total_spent'),
                 DB::raw('AVG(total_price) as avg_order_value')
             )
-            ->where('status', 'delivered')
+            ->where('status', OrderStatus::Delivered)
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('customer_name')
             ->orderByDesc('total_spent')
@@ -75,7 +76,7 @@ class AnalyticsController extends Controller
                 DB::raw('SUM(order_items.weight_grams) as total_grams'),
                 DB::raw('COUNT(DISTINCT orders.id) as order_count')
             )
-            ->where('orders.status', 'delivered')
+            ->where('orders.status', OrderStatus::Delivered)
             ->whereBetween('orders.created_at', [$start, $end])
             ->groupByRaw($material)
             ->orderByDesc('revenue')
@@ -108,7 +109,7 @@ class AnalyticsController extends Controller
                 DB::raw('SUM(order_items.weight_grams) as total_grams'),
                 DB::raw('SUM(order_items.print_time_minutes) as total_minutes')
             )
-            ->where('orders.status', 'delivered')
+            ->where('orders.status', OrderStatus::Delivered)
             ->whereBetween('orders.created_at', [$start, $end])
             ->groupBy('products.id', 'products.name', 'products.color_hex')
             ->orderByDesc('revenue')
@@ -144,8 +145,8 @@ class AnalyticsController extends Controller
             ->select(
                 DB::raw(Sql::yearMonth('created_at').' as month'),
                 DB::raw('COUNT(*) as total'),
-                DB::raw("SUM(CASE WHEN status='delivered' THEN 1 ELSE 0 END) as delivered"),
-                DB::raw("SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) as cancelled")
+                DB::raw("SUM(CASE WHEN status='".OrderStatus::Delivered->value."' THEN 1 ELSE 0 END) as delivered"),
+                DB::raw("SUM(CASE WHEN status='".OrderStatus::Cancelled->value."' THEN 1 ELSE 0 END) as cancelled")
             )
             ->whereBetween('created_at', [$start, $end])
             ->groupByRaw(Sql::yearMonth('created_at'))

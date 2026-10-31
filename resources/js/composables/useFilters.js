@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
-import debounce from 'lodash/debounce';
+import { useDebounceFn } from '@vueuse/core';
 
 export function useFilters(initialData) {
     const form = ref({
@@ -15,7 +15,7 @@ export function useFilters(initialData) {
         ...initialData
     });
 
-    watch(form, debounce((value) => {
+    watch(form, useDebounceFn((value) => {
         const queryParams = Object.keys(value).reduce((acc, key) => {
             if (value[key] !== '' && value[key] !== null && value[key] !== undefined) {
                 acc[key] = value[key];

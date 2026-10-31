@@ -8,6 +8,8 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
         './resources/js/**/*.vue',
+        // Status and material colours are defined in PHP enums and shared via Inertia.
+        './app/Enums/**/*.php',
     ],
 
     theme: {

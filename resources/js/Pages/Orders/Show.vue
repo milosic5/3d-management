@@ -12,11 +12,7 @@
       <template #actions>
         <span class="text-sm font-medium mr-3 text-slate-500">{{ $t('orders.change_status') }}</span>
         <select v-model="status" @change="updateStatus" class="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-500 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-orange-500">
-            <option value="received">{{ $t('status.received') }}</option>
-            <option value="printing">{{ $t('status.printing') }}</option>
-            <option value="finished">{{ $t('status.finished') }}</option>
-            <option value="delivered">{{ $t('status.delivered') }}</option>
-            <option value="cancelled">{{ $t('status.cancelled') }}</option>
+            <option v-for="s in orderStatuses" :key="s.value" :value="s.value">{{ $t('status.' + s.value) }}</option>
         </select>
         <StatusBadge :status="order.status" class="ml-4" />
         <Link :href="route('orders.edit', order.id)" class="ml-3">
@@ -172,11 +168,13 @@ import { Card } from '@/Components/ui/card'
 import { Button } from '@/Components/ui/button'
 import { BoxIcon, PencilIcon, ClockIcon, FileTextIcon, CopyIcon } from 'lucide-vue-next'
 import { usePrintTime } from '@/composables/usePrintTime'
+import { useEnums } from '@/composables/useEnums'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({ order: Object })
 const { t } = useI18n()
+const { orderStatuses } = useEnums()
 
 const status = ref(props.order.status)
 

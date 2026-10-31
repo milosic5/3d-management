@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Models\Filament;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -44,22 +46,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $this->authorize('create', Product::class);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-
-            'weight_grams' => 'required|numeric',
-            'print_time_minutes' => 'required|integer',
-            'price' => 'required|numeric',
-            'image' => 'nullable|image|max:5120',
-            'model_file' => 'nullable|file|max:102400',
-            'model_file_2' => 'nullable|file|max:102400',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         if ($request->hasFile('image')) {
             $validated['image_path'] = $request->file('image')->store('products', 'public');
@@ -90,22 +79,9 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
-        $this->authorize('update', $product);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-
-            'weight_grams' => 'required|numeric',
-            'print_time_minutes' => 'required|integer',
-            'price' => 'required|numeric',
-            'image' => 'nullable|image|max:5120',
-            'model_file' => 'nullable|file|max:102400',
-            'model_file_2' => 'nullable|file|max:102400',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         if ($request->hasFile('image')) {
             if ($product->image_path) {

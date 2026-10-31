@@ -12,7 +12,7 @@ class Calibration extends Model
         'temperature',
         'flow_ratio',
         'pressure_advance',
-        'max_volumetric_speed'
+        'max_volumetric_speed',
     ];
 
     public function filament(): BelongsTo

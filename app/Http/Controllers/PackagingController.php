@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePackagingRequest;
+use App\Http\Requests\UpdatePackagingRequest;
 use App\Models\Packaging;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PackagingController extends Controller
@@ -17,18 +18,9 @@ class PackagingController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StorePackagingRequest $request)
     {
-        $this->authorize('create', Packaging::class);
-
-        $validated = $request->validate([
-            'type' => 'required|string|in:box,envelope',
-            'name' => 'nullable|string|max:255',
-            'length' => 'required|numeric|min:0',
-            'width' => 'required|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-        ]);
+        $validated = $request->validated();
 
         if ($validated['type'] === 'envelope') {
             $validated['height'] = null;
@@ -39,17 +31,9 @@ class PackagingController extends Controller
         return back()->with('success', __('Packaging created successfully.'));
     }
 
-    public function update(Request $request, Packaging $packaging)
+    public function update(UpdatePackagingRequest $request, Packaging $packaging)
     {
-        $this->authorize('update', $packaging);
-
-        $validated = $request->validate([
-            'name' => 'nullable|string|max:255',
-            'length' => 'required|numeric|min:0',
-            'width' => 'required|numeric|min:0',
-            'height' => 'nullable|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-        ]);
+        $validated = $request->validated();
 
         if ($packaging->type === 'envelope') {
             $validated['height'] = null;

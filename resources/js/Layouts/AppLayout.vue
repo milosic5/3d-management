@@ -13,7 +13,7 @@
             <div class="h-16 flex items-center justify-between px-6 border-b border-slate-800">
                 <div class="flex items-center">
                     <LayersIcon class="w-6 h-6 text-orange-500 mr-3" />
-                    <span class="font-bold text-white tracking-tight">3D PrintShop</span>
+                    <span class="font-bold text-white tracking-tight">{{ $page.props.appName }}</span>
                 </div>
                 <button @click="isSidebarOpen = false" class="md:hidden text-slate-400 hover:text-white">
                     <XIcon class="w-5 h-5" />
@@ -184,9 +184,8 @@ const notifications = computed(() => page.props.notifications || {
 const toggleLocale = () => {
     const newLocale = locale.value === 'en' ? 'sr' : 'en';
     locale.value = newLocale;
-    localStorage.setItem('locale', newLocale);
-    
-    // Sync backend locale if Route exists
+
+    // The session remembers the choice; the server shares it back as the "locale" prop.
     router.post(route('locale.update'), { locale: newLocale }, { preserveScroll: true });
 };
 </script>

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreFilamentRequest;
+use App\Http\Requests\UpdateFilamentRequest;
+use App\Http\Requests\UpdateFilamentStockRequest;
 use App\Models\Filament;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,22 +39,9 @@ class FilamentController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreFilamentRequest $request)
     {
-        $this->authorize('create', Filament::class);
-
-        $validated = $request->validate([
-            'brand' => 'required|string|max:255',
-            'name' => 'required|string|max:255|unique:filaments,name',
-            'material' => 'required|in:pla,petg',
-            'color_name' => 'required|string|max:255',
-            'color_hex' => 'required|string|size:7',
-            'price_per_kg' => 'required|numeric|min:0',
-            'empty_spool_weight_grams' => 'nullable|numeric|min:0|max:9999',
-            'notes' => 'nullable|string',
-        ]);
-
-        Filament::create($validated);
+        Filament::create($request->validated());
 
         return redirect()->route('filaments.index');
     }
@@ -65,22 +55,9 @@ class FilamentController extends Controller
         ]);
     }
 
-    public function update(Request $request, Filament $filament)
+    public function update(UpdateFilamentRequest $request, Filament $filament)
     {
-        $this->authorize('update', $filament);
-
-        $validated = $request->validate([
-            'brand' => 'required|string|max:255',
-            'name' => 'required|string|max:255|unique:filaments,name,'.$filament->id,
-            'material' => 'required|in:pla,petg',
-            'color_name' => 'required|string|max:255',
-            'color_hex' => 'required|string|size:7',
-            'price_per_kg' => 'required|numeric|min:0',
-            'empty_spool_weight_grams' => 'nullable|numeric|min:0|max:9999',
-            'notes' => 'nullable|string',
-        ]);
-
-        $filament->update($validated);
+        $filament->update($request->validated());
 
         return redirect()->route('filaments.index');
     }
@@ -105,15 +82,9 @@ class FilamentController extends Controller
         ]);
     }
 
-    public function updateStock(Request $request, Filament $filament)
+    public function updateStock(UpdateFilamentStockRequest $request, Filament $filament)
     {
-        $this->authorize('update', $filament);
-
-        $validated = $request->validate([
-            'stock_rolls' => 'required|integer|min:0',
-        ]);
-
-        $filament->update($validated);
+        $filament->update($request->validated());
 
         return back()->with('success', 'Stock updated successfully.');
     }

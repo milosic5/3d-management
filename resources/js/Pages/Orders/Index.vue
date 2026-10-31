@@ -46,10 +46,8 @@
                 <!-- Status filter -->
                 <select v-model="form.status" class="h-10 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 dark:border-slate-800 dark:bg-slate-950 dark:focus-visible:ring-slate-300">
                     <option value="">{{ $t('common.all_statuses') }}</option>
-                    <option value="received">{{ $t('status.received') }}</option>
-                    <option value="printing">{{ $t('status.printing') }}</option>
-                    <option value="finished">{{ $t('status.finished') }}</option>
-                    <option value="delivered">{{ $t('status.delivered') }}</option>
+                    <!-- Cancelled orders have their own "show cancelled" toggle -->
+                    <option v-for="s in orderStatuses.filter(s => s.value !== 'cancelled')" :key="s.value" :value="s.value">{{ $t('status.' + s.value) }}</option>
                 </select>
 
                 <!-- Show cancelled checkbox -->
@@ -95,11 +93,13 @@ import SearchableSelect from '@/Components/SearchableSelect.vue'
 import { Button } from '@/Components/ui/button'
 import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, DownloadIcon, CopyIcon, RotateCcwIcon } from 'lucide-vue-next'
 import { useFilters } from '@/composables/useFilters'
+import { useEnums } from '@/composables/useEnums'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps({ orders: Object, filters: Object, products: { type: Array, default: () => [] } })
 const { form } = useFilters(props.filters)
 const { t } = useI18n()
+const { orderStatuses, statusColor } = useEnums()
 
 const periodOptions = computed(() => [
     { value: '', label: t('orders.period_all') },
@@ -198,25 +198,13 @@ const columns = [
   {
     header: t('orders.status'),
     cell: ({ row }) => {
-        const bgColors = {
-            'received': 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
-            'printing': 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200',
-            'finished': 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200',
-            'delivered': 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200',
-            'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
-        }
-        
         return h('select', {
-            class: `h-8 text-[10px] uppercase tracking-wider font-bold rounded-full border border-transparent px-4 py-1 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer appearance-none text-center min-w-[100px] ${bgColors[row.original.status] || ''}`,
+            class: `h-8 text-[10px] uppercase tracking-wider font-bold rounded-full border border-transparent px-4 py-1 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer appearance-none text-center min-w-[100px] ${statusColor(row.original.status)}`,
             value: row.original.status,
             onChange: (e) => updateStatus(row.original.id, e.target.value)
-        }, [
-            h('option', { value: 'received', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.received')),
-            h('option', { value: 'printing', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.printing')),
-            h('option', { value: 'finished', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.finished')),
-            h('option', { value: 'delivered', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.delivered')),
-            h('option', { value: 'cancelled', class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.cancelled'))
-        ])
+        }, orderStatuses.value.map(s =>
+            h('option', { value: s.value, class: 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white' }, t('status.' + s.value))
+        ))
     }
   },
   {

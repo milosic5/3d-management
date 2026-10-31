@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreInvestmentRequest;
+use App\Http\Requests\UpdateInvestmentRequest;
 use App\Models\Filament;
 use App\Models\Investment;
 use App\Models\InvestmentCategory;
@@ -57,23 +59,13 @@ class InvestmentController extends Controller
     {
         return Inertia::render('Investments/Create', [
             'categories' => InvestmentCategory::all(),
-            'filaments' => Filament::get(['name', 'price_per_kg'])->unique('name')->values(),
+            'filaments' => $this->filamentOptions(),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreInvestmentRequest $request)
     {
-        $this->authorize('create', Investment::class);
-
-        $validated = $request->validate([
-            'category_id' => 'required|exists:investment_categories,id',
-            'name' => 'required|string|max:255',
-            'unit_cost' => 'required|numeric|min:0',
-            'quantity' => 'required|numeric|min:0',
-            'unit' => 'required|string|max:50',
-            'invested_at' => 'required|date',
-            'notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $validated['amount'] = $validated['unit_cost'] * ($validated['quantity'] ?: 1);
         $validated['created_by'] = $request->user()->id;
@@ -88,23 +80,19 @@ class InvestmentController extends Controller
         return Inertia::render('Investments/Edit', [
             'investment' => $investment,
             'categories' => InvestmentCategory::all(),
-            'filaments' => Filament::get(['name', 'price_per_kg'])->unique('name')->values(),
+            'filaments' => $this->filamentOptions(),
         ]);
     }
 
-    public function update(Request $request, Investment $investment)
+    private function filamentOptions()
     {
-        $this->authorize('update', $investment);
+        return Filament::orderBy('brand')->orderBy('name')
+            ->get(['id', 'brand', 'name', 'color_name', 'price_per_kg']);
+    }
 
-        $validated = $request->validate([
-            'category_id' => 'required|exists:investment_categories,id',
-            'name' => 'required|string|max:255',
-            'unit_cost' => 'required|numeric|min:0',
-            'quantity' => 'required|numeric|min:0',
-            'unit' => 'required|string|max:50',
-            'invested_at' => 'required|date',
-            'notes' => 'nullable|string',
-        ]);
+    public function update(UpdateInvestmentRequest $request, Investment $investment)
+    {
+        $validated = $request->validated();
 
         $validated['amount'] = $validated['unit_cost'] * ($validated['quantity'] ?: 1);
 

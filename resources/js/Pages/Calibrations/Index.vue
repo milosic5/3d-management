@@ -147,7 +147,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { PlusIcon, PencilIcon, TrashIcon, InboxIcon, FilterIcon, ArrowUpIcon, ArrowDownIcon } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
-import debounce from 'lodash/debounce'
 
 const props = defineProps({ calibrations: Object, topBrands: Array, filters: Object })
 const page = usePage()

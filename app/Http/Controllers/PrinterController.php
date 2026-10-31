@@ -2,20 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ResetNozzleRequest;
+use App\Http\Requests\StoreMaintenanceRequest;
+use App\Http\Requests\StorePrinterRequest;
+use App\Http\Requests\UpdateMaintenanceRequest;
+use App\Http\Requests\UpdatePrinterRequest;
 use App\Models\Printer;
 use App\Models\PrinterMaintenance;
 use App\Models\PrinterNozzleChange;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class PrinterController extends Controller
 {
     public function index()
     {
-        // Eager load maintenance to calculate the appended attribute efficiently if possible, but actually `latest()->get()` is fine
-        // since we check it dynamically. To avoid N+1, we can eager load maintenances.
+        // Maintenances are eager loaded so needs_maintenance needs no query per printer.
         return Inertia::render('Printers/Index', [
-            'printers' => Printer::with('maintenances')->latest()->get(),
+            'printers' => Printer::with('maintenances')->latest()->get()
+                ->each->append(['current_nozzle_hours', 'needs_maintenance']),
         ]);
     }
 
@@ -31,15 +35,9 @@ class PrinterController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StorePrinterRequest $request)
     {
-        $this->authorize('create', Printer::class);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'total_working_hours' => 'required|integer|min:0',
-        ]);
-
+        $validated = $request->validated();
         $validated['last_nozzle_working_hours'] = $validated['total_working_hours'];
 
         Printer::create($validated);
@@ -47,28 +45,16 @@ class PrinterController extends Controller
         return back();
     }
 
-    public function update(Request $request, Printer $printer)
+    public function update(UpdatePrinterRequest $request, Printer $printer)
     {
-        $this->authorize('update', $printer);
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'total_working_hours' => 'required|integer|min:0',
-        ]);
-
-        $printer->update($validated);
+        $printer->update($request->validated());
 
         return back();
     }
 
-    public function resetNozzle(Request $request, Printer $printer)
+    public function resetNozzle(ResetNozzleRequest $request, Printer $printer)
     {
-        $this->authorize('update', $printer);
-
-        $validated = $request->validate([
-            'working_hours_at_change' => 'required|integer|min:0',
-            'nozzle_diameter' => 'required|numeric',
-        ]);
+        $validated = $request->validated();
 
         PrinterNozzleChange::create([
             'printer_id' => $printer->id,
@@ -91,14 +77,9 @@ class PrinterController extends Controller
         return back();
     }
 
-    public function storeMaintenance(Request $request, Printer $printer)
+    public function storeMaintenance(StoreMaintenanceRequest $request, Printer $printer)
     {
-        $this->authorize('update', $printer);
-
-        $validated = $request->validate([
-            'working_hours_at_maintenance' => 'required|integer|min:'.$printer->total_working_hours,
-            'lubricated' => 'required|boolean',
-        ]);
+        $validated = $request->validated();
 
         $now = now();
         if ($now->day <= 15) {
@@ -145,16 +126,9 @@ class PrinterController extends Controller
         return back();
     }
 
-    public function updateMaintenance(Request $request, PrinterMaintenance $maintenance)
+    public function updateMaintenance(UpdateMaintenanceRequest $request, PrinterMaintenance $maintenance)
     {
-        $this->authorize('update', $maintenance->printer);
-
-        $validated = $request->validate([
-            'maintenance_month' => 'required|date_format:Y-m',
-            'working_hours_at_maintenance' => 'required|integer|min:0',
-            'hours_printed_this_month' => 'required|integer|min:0',
-            'lubricated' => 'required|boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['maintenance_month'] .= '-01';
 

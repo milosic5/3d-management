@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FilamentMaterial;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,6 +21,7 @@ class Filament extends Model
     protected function casts(): array
     {
         return [
+            'material' => FilamentMaterial::class,
             'price_per_kg' => 'decimal:2',
             'empty_spool_weight_grams' => 'decimal:2',
         ];

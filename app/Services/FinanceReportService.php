@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\OrderStatus;
 use App\Support\Sql;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -48,7 +49,7 @@ class FinanceReportService
         $revenue = DB::table('orders')
             ->whereNull('orders.deleted_at')
             ->select(DB::raw(Sql::yearMonth('created_at').' as month'), DB::raw('SUM(total_price) as revenue'))
-            ->where('status', 'delivered')
+            ->where('status', OrderStatus::Delivered)
             ->whereBetween('created_at', [$start, $end])
             ->groupByRaw(Sql::yearMonth('created_at'))
             ->orderBy('month')

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\InvestmentsExport;
 use App\Exports\OrdersExport;
 use App\Models\Order;
+use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -42,7 +43,7 @@ class ExportController extends Controller
 
         $order->load(['items.product', 'creator']);
 
-        $pdf = Pdf::loadView('pdf.order', compact('order'))
+        $pdf = Pdf::loadView('pdf.order', ['order' => $order, 'appName' => Setting::appName()])
             ->setPaper('a4', 'portrait');
 
         return $pdf->download("order_{$order->order_number}.pdf");
