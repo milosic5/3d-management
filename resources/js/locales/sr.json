@@ -365,6 +365,8 @@
     "item_dimensions": "Dimenzije predmeta",
     "find": "Pronađi",
     "no_box_found": "Nije pronađena odgovarajuća kutija za ove dimenzije",
-    "box_found": "Odgovarajuća kutija: {name}"
+    "box_found": "Odgovarajuća kutija: {name}",
+    "out_of_stock": "Nema na zalihama",
+    "low_stock": "Pri kraju"
   }
 }

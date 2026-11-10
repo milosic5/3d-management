@@ -364,6 +364,8 @@
     "item_dimensions": "Item Dimensions",
     "find": "Find",
     "no_box_found": "No suitable box found for these dimensions",
-    "box_found": "Suitable box: {name}"
+    "box_found": "Suitable box: {name}",
+    "out_of_stock": "Out of stock",
+    "low_stock": "Low stock"
   }
 }

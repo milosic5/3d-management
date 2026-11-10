@@ -206,7 +206,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue'
 import SecondaryButton from '@/Components/SecondaryButton.vue'
 import ConfirmDialog from '@/Components/ConfirmDialog.vue'
 import { Button } from '@/Components/ui/button'
-import { PlusIcon, PencilIcon, TrashIcon, MinusIcon, SearchIcon, PackageIcon } from 'lucide-vue-next'
+import { PlusIcon, PencilIcon, TrashIcon, MinusIcon, SearchIcon, PackageIcon, AlertTriangleIcon } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 
@@ -534,12 +534,31 @@ const removeStock = (item) => {
 }
 
 const getRowClass = (row) => {
-    return row.stock < 2 ? 'bg-red-50 dark:bg-red-900/20' : ''
+    if (row.stock <= 0) return 'bg-red-100/80 dark:bg-red-900/30 shadow-[inset_4px_0_0_0_#ef4444] hover:bg-red-100'
+    if (row.stock === 1) return 'bg-amber-50 dark:bg-amber-900/20 shadow-[inset_4px_0_0_0_#f59e0b]'
+    return ''
 }
 
 const columns = computed(() => {
   return [
-    { header: t('packagings.name'), accessorKey: 'name', cell: ({ row }) => h('span', { class: 'font-semibold' }, row.original.name || '-') },
+    {
+      header: t('packagings.name'),
+      accessorKey: 'name',
+      cell: ({ row }) => {
+          const stock = row.original.stock
+          return h('div', { class: 'flex items-center gap-2' }, [
+              h('span', { class: ['font-semibold', stock <= 0 ? 'text-red-700 dark:text-red-400' : ''] }, row.original.name || '-'),
+              stock <= 0
+                  ? h('span', { class: 'inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white' }, [
+                        h(AlertTriangleIcon, { class: 'w-3 h-3' }),
+                        t('packagings.out_of_stock')
+                    ])
+                  : stock === 1
+                      ? h('span', { class: 'inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-800' }, t('packagings.low_stock'))
+                      : null
+          ])
+      }
+    },
     {
       header: t('packagings.dimensions'),
       id: 'dimensions',
@@ -564,7 +583,12 @@ const columns = computed(() => {
       cell: ({ row }) => {
           return h('div', { class: 'flex items-center space-x-2' }, [
               h(Button, { variant: 'outline', size: 'icon', class: 'w-6 h-6', onClick: () => removeStock(row.original) }, () => h(MinusIcon, { class: 'w-3 h-3' })),
-              h('span', { class: 'font-mono font-medium w-8 text-center inline-block' }, row.original.stock),
+              h('span', {
+                  class: [
+                      'font-mono font-medium w-8 text-center inline-block',
+                      row.original.stock <= 0 ? 'text-red-600 font-bold' : (row.original.stock === 1 ? 'text-amber-600 font-bold' : '')
+                  ]
+              }, row.original.stock),
               h(Button, { variant: 'outline', size: 'icon', class: 'w-6 h-6', onClick: () => addStock(row.original) }, () => h(PlusIcon, { class: 'w-3 h-3' }))
           ])
       }
